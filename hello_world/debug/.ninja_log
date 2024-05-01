@@ -1,0 +1,24 @@
+# ninja log v6
+3	87	1714553359527578428	CMakeFiles/hello_world.elf.dir/startup/startup_MCXN947_cm33_core0.S.obj	6d0269a179369c94
+7	137	1714553359531794595	CMakeFiles/hello_world.elf.dir/utilities/fsl_sbrk.c.obj	9adc5d0d76c05e4f
+9	149	1714553359533049615	CMakeFiles/hello_world.elf.dir/utilities/fsl_syscall_stub.c.obj	5669ea12a686d58c
+91	152	1714553359615394820	CMakeFiles/hello_world.elf.dir/utilities/fsl_memcpy.S.obj	598fbc6e9a1ea65c
+4	329	1714553359527838147	CMakeFiles/hello_world.elf.dir/device/system_MCXN947_cm33_core0.c.obj	5f348a2481efb9cd
+5	372	1714553359529062198	CMakeFiles/hello_world.elf.dir/drivers/fsl_common_arm.c.obj	2c2a05d90bd7a70
+4	380	1714553359528660080	CMakeFiles/hello_world.elf.dir/drivers/fsl_common.c.obj	c0e68e8a3b627c0e
+5	381	1714553359529420308	CMakeFiles/hello_world.elf.dir/drivers/fsl_gpio.c.obj	b74649bc62815760
+7	386	1714553359530940853	CMakeFiles/hello_world.elf.dir/drivers/fsl_reset.c.obj	3dd237ad7bc1b04e
+3	395	1714553359527003559	CMakeFiles/hello_world.elf.dir/component/lists/fsl_component_generic_list.c.obj	aab7ae527c4210d5
+2	395	1714553359526523740	CMakeFiles/hello_world.elf.dir/board/pin_mux.c.obj	4af9771a9116c2c5
+2	405	1714553359526768849	CMakeFiles/hello_world.elf.dir/source/hello_world.c.obj	3a3209b886047503
+2	406	1714553359525842962	CMakeFiles/hello_world.elf.dir/board/board.c.obj	7146bc49d082663d
+3	420	1714553359527314423	CMakeFiles/hello_world.elf.dir/component/uart/fsl_adapter_lpuart.c.obj	75ea035c959d6515
+2	422	1714553359526271225	CMakeFiles/hello_world.elf.dir/board/clock_config.c.obj	bef4571548c51b77
+6	432	1714553359529811581	CMakeFiles/hello_world.elf.dir/drivers/fsl_lpflexcomm.c.obj	96bee4fa362627ee
+137	441	1714553359661452653	CMakeFiles/hello_world.elf.dir/utilities/fsl_assert.c.obj	bf3d5cac8adc204e
+152	498	1714553359676076178	CMakeFiles/hello_world.elf.dir/utilities/fsl_debug_console.c.obj	a77c28b000f703ae
+6	516	1714553359530548379	CMakeFiles/hello_world.elf.dir/drivers/fsl_spc.c.obj	30c671b14747d2fe
+149	518	1714553359673580561	CMakeFiles/hello_world.elf.dir/utilities/fsl_str.c.obj	f89c4aebec52506c
+6	525	1714553359530179693	CMakeFiles/hello_world.elf.dir/drivers/fsl_lpuart.c.obj	b8dd3f5d6199209e
+4	589	1714553359528191287	CMakeFiles/hello_world.elf.dir/drivers/fsl_clock.c.obj	c4b67f9f14613cf1
+589	649	1714553360113355271	hello_world.elf	bf3c00d06dfce3d6

@@ -1,0 +1,13 @@
+{
+  "version": "1.4",
+  "toolchainPath": "/Applications/MCUXpressoIDE_11.9.1_2170/ide/tools",
+  "linkedProjects": [],
+  "trustZoneType": "none",
+  "multicoreType": "none",
+  "debug": {
+    "linkserver": {},
+    "pemicro": {},
+    "segger": {}
+  },
+  "projectType": "cmake-freestanding"
+}
