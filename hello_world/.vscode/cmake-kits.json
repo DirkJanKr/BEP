@@ -1,0 +1,11 @@
+[
+  {
+    "name": "ARM GCC",
+    "environmentVariables": {
+      "ARMGCC_DIR": "/Applications/MCUXpressoIDE_11.9.1_2170/ide/tools"
+    },
+    "cmakeSettings": {},
+    "keep": true,
+    "toolchainFile": "${workspaceFolder}/armgcc.cmake"
+  }
+]
