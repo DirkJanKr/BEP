@@ -36,6 +36,31 @@ Desktop.ini
 # If using Python, uncomment the next line
 # *.pyc
 
+# Ignore object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Ignore compiled files
+*.mod*
+*.cmd
+*.bin
+*.hex
+
+# Ignore libraries
+*.a
+*.lib
+
+# Ignore generated files
+*.gen.*
+
+# Ignore MCUXpresso IDE related files
+*.launch
+*.project
+*.cproject
+*.settings/
+
 # If using Node.js, uncomment the next lines
 # node_modules/
 # package-lock.json
