@@ -1,6 +1,6 @@
 {
   "version": "1.4",
-  "toolchainPath": "/Applications/MCUXpressoIDE_11.9.1_2170/ide/tools",
+  "toolchainPath": "C:/NXP/MCUXpressoIDE_11.9.1_2170/ide/tools",
   "linkedProjects": [],
   "trustZoneType": "none",
   "multicoreType": "none",
