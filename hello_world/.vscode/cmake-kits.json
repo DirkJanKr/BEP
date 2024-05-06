@@ -2,9 +2,13 @@
   {
     "name": "ARM GCC",
     "environmentVariables": {
-      "ARMGCC_DIR": "/Applications/MCUXpressoIDE_11.9.1_2170/ide/tools"
+      "ARMGCC_DIR": "${command:mcuxpresso.toolchainPath}",
+      "SdkRootDirPath": "${command:mcuxpresso.repoPath}"
     },
-    "cmakeSettings": {},
+    "cmakeSettings": {
+      "SdkRootDirPath": "${command:mcuxpresso.repoPath}",
+      "POSTPROCESS_UTILITY": "${command:mcuxpresso.postProcessPath}"
+    },
     "keep": true,
     "toolchainFile": "${workspaceFolder}/armgcc.cmake"
   }
