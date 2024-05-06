@@ -45,7 +45,7 @@ int main(void)
     BOARD_InitBootClocks();
     BOARD_InitDebugConsole();
 
-    PRINTF("hello world.\r\n");
+    PRINTF("Stinky\r\n");
 
     while (1)
     {
