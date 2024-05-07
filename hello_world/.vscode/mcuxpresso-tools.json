@@ -5,7 +5,10 @@
   "trustZoneType": "none",
   "multicoreType": "none",
   "debug": {
-    "linkserver": {},
+    "linkserver": {
+      "device": "MCXN947:FRDM-MCXN947",
+      "core": "cm33_core0"
+    },
     "pemicro": {},
     "segger": {}
   },
