@@ -5,6 +5,9 @@ cmake_install.cmake
 Makefile
 *.make
 
+# Ignore the 'ide_overrides.cmake' file
+ide_overrides.cmake
+
 # Build directories
 build/
 debug/
