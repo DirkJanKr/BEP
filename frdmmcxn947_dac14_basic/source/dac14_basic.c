@@ -110,13 +110,22 @@ void generateSineWave(uint32_t *values, uint32_t size, float frequency) {
  */
 int main(void)
 {
+    dac14_config_t dac14ConfigStruct;
+
+    // Attach FRO 12M to FLEXCOMM4 (debug console)
+    CLOCK_SetClkDiv(kCLOCK_DivFlexcom4Clk, 1u);
+    CLOCK_AttachClk(BOARD_DEBUG_UART_CLK_ATTACH);
+
+    // Attach FRO HF to DAC2
+    CLOCK_SetClkDiv(kCLOCK_DivDac2Clk, 1u);
+    CLOCK_AttachClk(kFRO_HF_to_DAC2);
+
     // Initialize all required board-specific configurations
     BOARD_InitPins();
     BOARD_InitBootClocks();
     BOARD_InitDebugConsole();
 
     // DAC configuration
-    dac14_config_t dac14ConfigStruct;
     DAC14_GetDefaultConfig(&dac14ConfigStruct);
     dac14ConfigStruct.TriggerSource = kDAC14_SoftwareTriggerSource;
     dac14ConfigStruct.WorkMode = kDAC14_FIFOWorkMode;
@@ -126,10 +135,6 @@ int main(void)
 
     // enable analog module
     SPC0->ACTIVE_CFG1 |= 0x41;
-
-    // Configure the clock specific to the CTIMER instance being used
-    CLOCK_SetClkDiv(kCLOCK_DivCtimer0Clk, 1u);
-    CLOCK_AttachClk(kFRO_HF_to_CTIMER0);
 
     // Calculate the number of points per cycle for the sine wave
     uint32_t points_per_cycle = SAMPLE_RATE / DESIRED_FREQUENCY;
@@ -147,7 +152,6 @@ int main(void)
     // Main loop does nothing, just waits forever
     while (1)
     {
-        PRINTF("In while loop\n");
     }
 }
 
