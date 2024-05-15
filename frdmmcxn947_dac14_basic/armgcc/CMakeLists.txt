@@ -51,9 +51,9 @@ include(${ProjDirPath}/flags.cmake)
 include(${ProjDirPath}/config.cmake)
 
 add_executable(${MCUX_SDK_PROJECT_NAME} 
-"${ProjDirPath}/../dac14_basic.c"
-"${ProjDirPath}/../pin_mux.c"
-"${ProjDirPath}/../pin_mux.h"
+"${ProjDirPath}/../source/dac14_basic.c"
+"${ProjDirPath}/../source/pin_mux.c"
+"${ProjDirPath}/../source/pin_mux.h"
 "${SdkRootDirPath}/core/boards/frdmmcxn947/board.c"
 "${SdkRootDirPath}/core/boards/frdmmcxn947/board.h"
 "${SdkRootDirPath}/core/boards/frdmmcxn947/clock_config.c"
@@ -62,6 +62,8 @@ add_executable(${MCUX_SDK_PROJECT_NAME}
 "${SdkRootDirPath}/examples/frdmmcxn947/board.h"
 "${SdkRootDirPath}/examples/frdmmcxn947/clock_config.c"
 "${SdkRootDirPath}/examples/frdmmcxn947/clock_config.h"
+"${SdkRootDirPath}/core/drivers/ctimer/fsl_ctimer.h"
+"${SdkRootDirPath}/core/drivers/ctimer/fsl_ctimer.c"
 )
 
 target_include_directories(${MCUX_SDK_PROJECT_NAME} PRIVATE
