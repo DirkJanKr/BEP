@@ -9,11 +9,13 @@
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-#define SAMPLE_RATE 5000 // DAC update sample rate in Hz
-#define DESIRED_FREQUENCY 5.0 // Desired output frequency in Hz
+#define SAMPLE_RATE 1000 // DAC update sample rate in Hz
+#define DESIRED_FREQUENCY 5 // Desired output frequency in Hz
 #define DUTY_CYCLE 50 // Duty cycle of the square wave in percentage also used for triangle wave to determine the slope of the triangle wave
-#define MAX_ARRAY_SIZE 1000 // Maximum size of the DAC buffer
+#define MAX_ARRAY_SIZE 10000 // Maximum size of the DAC buffer
 #define DEMO_DAC14_BASEADDR DAC2
+#define OPAMP_GAIN 1 // Gain of the opamp
+#define DESIRED_AMPLITUDE 1 // Desired max amplitude in V of the wave
 
 /*******************************************************************************
  * Prototypes
@@ -23,6 +25,7 @@ void dac_update_callback(uint32_t flags);
 void SetupTimer();
 void generateSquareWave(uint32_t *values, uint32_t size);
 void generateTriangleWave(uint32_t *values, uint32_t size);
+void scaleDacValues(uint32_t *values, uint32_t size);
 
 /*******************************************************************************
  * Variables
@@ -35,6 +38,17 @@ uint32_t waveType = 2; // 0 = sine, 1 = square, 2 = triangle
 /*******************************************************************************
  * Code
  ******************************************************************************/
+/*!
+ * @brief Scale the DAC values based on desired amplitude and op-amp gain.
+ */
+void scaleDacValues(uint32_t *values, uint32_t size)
+{
+    float maxDacValue = (DESIRED_AMPLITUDE/OPAMP_GAIN) * (16383.0 / 3.3); // Max DAC value for desired amplitude
+    for (uint32_t i = 0; i < size; i++)
+    {
+        values[i] = (uint32_t)((float)values[i] / 16383.0 * maxDacValue);
+    }
+}
 
 /*!
  * @brief Generate a sine wave in the DAC buffer. The values should be in the range of 0 to 16383 and never negative or greater than 16383.
@@ -47,6 +61,7 @@ void generateSineWave(uint32_t *values, uint32_t size)
         float angle = i * deltaAngle;
         values[i] = (uint32_t)((sin(angle) + 1.0) * 8191.5); // Scale sine to DAC range
     }
+    scaleDacValues(values, size);
 }
 
 /*!
@@ -70,6 +85,7 @@ void generateSquareWave(uint32_t *values, uint32_t size)
     {
         values[i] = 0;
     }
+    scaleDacValues(values, size);
 }
 
 /*!
@@ -100,6 +116,7 @@ void generateTriangleWave(uint32_t *values, uint32_t size)
     {
         values[i] = 16383 - (i - onSize) * slope;
     }
+    scaleDacValues(values, size);
 }
 
 /*!
@@ -117,6 +134,9 @@ void dac_update_callback(uint32_t flags)
  */
 void SetupTimer()
 {
+    CLOCK_SetClkDiv(kCLOCK_DivCtimer4Clk, 1u);
+    CLOCK_AttachClk(kFRO_HF_to_CTIMER4);  // Attach a suitable clock source to CTIMER4
+
     ctimer_config_t config;
     CTIMER_GetDefaultConfig(&config);
     CTIMER_Init(CTIMER4, &config);
@@ -139,22 +159,13 @@ void SetupTimer()
 }
 
 /*!
- * @brief Main function
- */
-int main(void)
+* @brief Function that does al the initializations and setups, this makes the main function cleaner and easier to read.
+*/
+void Dac_and_other_setup()
 {
-    // Initialize board, clocks, and debug console
     BOARD_InitPins();
     BOARD_InitBootClocks();
     BOARD_InitDebugConsole();
-
-    // Enable the clock for CTIMER4
-    CLOCK_SetClkDiv(kCLOCK_DivCtimer4Clk, 1u);
-    CLOCK_AttachClk(kFRO_HF_to_CTIMER4);  // Attach a suitable clock source to CTIMER4
-
-    // Print clock frequency of the timer
-    uint32_t timerClockFreq = CLOCK_GetFreq(kCLOCK_DivCtimer4Clk);
-    PRINTF("CTIMER4 clock frequency: %d\n", timerClockFreq);
 
     // Configure clock for DAC2
     CLOCK_SetClkDiv(kCLOCK_DivDac2Clk, 1u);
@@ -171,14 +182,21 @@ int main(void)
 
     // Enable analog module
     SPC0->ACTIVE_CFG1 |= 0x41;
+    
+}
+
+/*!
+ * @brief Main function
+ */
+int main(void)
+{
+    Dac_and_other_setup();
 
     // Calculate the size of the DAC buffer based on the sample rate and desired frequency
     g_Dac14ValueArraySize = (uint32_t)(SAMPLE_RATE / DESIRED_FREQUENCY);
     if (g_Dac14ValueArraySize > MAX_ARRAY_SIZE) {
         g_Dac14ValueArraySize = MAX_ARRAY_SIZE;
     }
-
-    PRINTF("DAC buffer size: %d\n", g_Dac14ValueArraySize);
 
     // Fill the buffer with the required type of wave
     switch (waveType) {
