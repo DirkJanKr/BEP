@@ -51,9 +51,13 @@ include(${ProjDirPath}/flags.cmake)
 include(${ProjDirPath}/config.cmake)
 
 add_executable(${MCUX_SDK_PROJECT_NAME} 
-"${ProjDirPath}/../source/dac14_basic.c"
-"${ProjDirPath}/../source/pin_mux.c"
-"${ProjDirPath}/../source/pin_mux.h"
+"${ProjDirPath}/../source/DAC_files/DAC_micro_hot_plate.c"
+"${ProjDirPath}/../source/DAC_files/DAC_micro_hot_plate.h"
+"${ProjDirPath}/../source/main.c"
+"${ProjDirPath}/../source/global.c"
+"${ProjDirPath}/../source/global.h"
+"${ProjDirPath}/../source/drivers/pin_mux.c"
+"${ProjDirPath}/../source/drivers/pin_mux.h"
 "${SdkRootDirPath}/core/boards/frdmmcxn947/board.c"
 "${SdkRootDirPath}/core/boards/frdmmcxn947/board.h"
 "${SdkRootDirPath}/core/boards/frdmmcxn947/clock_config.c"
