@@ -6,26 +6,6 @@
 #include "fsl_debug_console.h"
 #include "source/drivers/pin_mux.h"
 
-#define MAX_COMMAND_LEN 50
-
-// Function to parse and process commands
-void process_command(char *command) {
-    char cmd[MAX_COMMAND_LEN];
-    int freq, amplitude, duty_cycle;
-
-    sscanf(command, "%s %d %d %d", cmd, &freq, &amplitude, &duty_cycle);
-
-    if (strcmp(cmd, "SET_PARAMS") == 0) {
-        PRINTF("Received SET_PARAMS command:\n");
-        PRINTF("Frequency: %d Hz\n", freq);
-        PRINTF("Amplitude: %d V\n", amplitude);
-        PRINTF("Duty Cycle: %d %%\n", duty_cycle);
-        // Update global variables
-        dutyCycle = duty_cycle;
-        desiredFrequency = freq;
-        desiredAmplitude = amplitude;
-    } 
-}
 
 int main(void) {
     BOARD_InitPins();
@@ -33,26 +13,6 @@ int main(void) {
     BOARD_InitDebugConsole();
 
     Dac_and_other_setup();
-
-    // Serial port configuration
-    char command[MAX_COMMAND_LEN];
-    PRINTF("Waiting for command from Python...\n");
-    
-    // Loop to wait for the command
-    while (1) {
-        // Receive command from Python
-        fgets(command, MAX_COMMAND_LEN, stdin);
-        // Remove newline character from the end of the string
-        command[strcspn(command, "\n")] = '\0';
-                
-        // Process received command
-        process_command(command);
-
-        // Break out of the loop once command is received
-        if (strcmp(command, "") != 0) {
-            break;
-        }
-    }
 
     // Proceed with DAC setup and wave generation only after receiving parameters
     g_Dac14ValueArraySize = (uint32_t)(SAMPLE_RATE / desiredFrequency);
