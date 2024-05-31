@@ -10,7 +10,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 1080, 720)
 
         # Load and apply the stylesheet
-        with open("source/GUI/styles.qss", "r") as f:
+        with open("Gas_sensor_read_out/source/GUI/styles.qss", "r") as f:
             self.setStyleSheet(f.read())
 
         # Main widget
@@ -42,7 +42,7 @@ class MainWindow(QMainWindow):
         # Add the logo to the top left frame
         logo_label = QLabel()
         logo_label.setObjectName("logoLabel")
-        pixmap = QPixmap("source/GUI/TUDelft-logo_full-color.png")  # Replace with the actual path to your logo
+        pixmap = QPixmap("Gas_sensor_read_out/source/GUI/TUDelft-logo_full-color.png")  # Replace with the actual path to your logo
         logo_label.setPixmap(pixmap.scaled(300, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         logo_label.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
         logo_label.setStyleSheet("QLabel#logoLabel { border: none; }")  # Remove border from logo label
@@ -152,7 +152,7 @@ class MainWindow(QMainWindow):
         # Add example plot to the top right frame
         plot_label = QLabel()
         plot_label.setObjectName("plotLabel")
-        pixmap = QPixmap("source/GUI/example_plot.png")  # Replace with the actual path to your image
+        pixmap = QPixmap("Gas_sensor_read_out/source/GUI/example_plot.png")  # Replace with the actual path to your image
         plot_label.setPixmap(pixmap.scaled(720, 480, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         plot_label.setAlignment(Qt.AlignCenter)
         plot_label.setStyleSheet("QLabel#plotLabel { border: none; }")
