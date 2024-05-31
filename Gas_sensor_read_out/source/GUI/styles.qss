@@ -1,0 +1,73 @@
+/* styles.qss */
+
+QFrame {
+    border: 2px solid grey;
+    border-radius: 5px;
+    margin: 0px;
+}
+
+#topLeftFrame {
+    background-color: lightgrey;
+}
+
+#topRightFrame {
+    background-color: lightgrey;
+}
+
+#bottomFrame {
+    background-color: black;
+    color: white;
+}
+
+QLabel {
+    font-family: Helvetica, sans-serif;
+    font-size: 12pt;
+}
+
+#logoLabel {
+    margin-bottom: 10px;
+}
+
+#bottomFrame QLabel {
+    color: white;  /* Ensure all QLabels inside the bottomFrame have white text */
+}
+
+QLineEdit {
+    font-family: Helvetica, sans-serif;
+    font-size: 12pt;
+    border: 1px solid grey;
+    border-radius: 3px;
+    padding: 3px;
+    margin: 5px 0;
+}
+
+/* Button styles */
+QPushButton#startButton {
+    background-color: #4CAF50; /* Green */
+    color: white;
+    padding: 10px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 16px;
+    margin: 4px 2px;
+    border-radius: 12px;
+}
+
+QPushButton#startButton:hover {
+    background-color: #45a049;
+}
+
+QPushButton#downloadButton {
+    background-color: #008CBA; /* Blue */
+    color: white;
+    padding: 10px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 16px;
+    margin: 4px 2px;
+    border-radius: 12px;
+}
+
+QPushButton#downloadButton:hover {
+    background-color: #0b7dda;
+}

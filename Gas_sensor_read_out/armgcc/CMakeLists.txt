@@ -53,6 +53,13 @@ include(${ProjDirPath}/config.cmake)
 add_executable(${MCUX_SDK_PROJECT_NAME} 
 "${ProjDirPath}/../source/DAC_files/DAC_micro_hot_plate.c"
 "${ProjDirPath}/../source/DAC_files/DAC_micro_hot_plate.h"
+"${ProjDirPath}/../source/ADC_files/adc_16_strip.c"
+"${ProjDirPath}/../source/ADC_files/adc_16_strip.h"
+"${ProjDirPath}/../source/drivers/fsl_lpadc.c"
+"${ProjDirPath}/../source/drivers/fsl_lpadc.h"
+"${ProjDirPath}/../source/drivers/fsl_vref.c"
+"${ProjDirPath}/../source/drivers/fsl_vref.h"
+
 "${ProjDirPath}/../source/main.c"
 "${ProjDirPath}/../source/global.c"
 "${ProjDirPath}/../source/global.h"
