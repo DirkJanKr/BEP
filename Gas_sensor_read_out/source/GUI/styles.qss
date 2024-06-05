@@ -69,5 +69,5 @@ QPushButton#downloadButton {
 }
 
 QPushButton#downloadButton:hover {
-    background-color: #0b7dda;
+    background-color: #0b7dda;
 }

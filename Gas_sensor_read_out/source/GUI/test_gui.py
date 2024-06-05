@@ -45,7 +45,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Styled GUI")
-        self.setGeometry(10, 10, 720, 480)
+        self.setGeometry(100, 100, 1080, 720)
 
         # Load and apply the stylesheet
         with open("source/GUI/styles.qss", "r") as f:
