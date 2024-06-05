@@ -20,7 +20,7 @@ QFrame {
 }
 
 QLabel {
-    font-family: Helvetica, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;  /* Ensure compatibility with more systems */
     font-size: 12pt;
 }
 
@@ -33,7 +33,7 @@ QLabel {
 }
 
 QLineEdit {
-    font-family: Helvetica, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;  /* Ensure compatibility with more systems */
     font-size: 12pt;
     border: 1px solid grey;
     border-radius: 3px;
@@ -69,5 +69,5 @@ QPushButton#downloadButton {
 }
 
 QPushButton#downloadButton:hover {
-    background-color: #0b7dda;
+    background-color: #0b7dda;
 }
