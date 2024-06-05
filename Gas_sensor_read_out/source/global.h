@@ -29,19 +29,40 @@ extern float desiredFrequency;
 extern uint32_t desiredAmplitude;
 
 // flag to indicate g_strip array is filled
-extern volatile bool g_strip_values_ready;
+extern volatile bool I_sens_strip_values_ready;
+extern volatile bool V_sens_strip_values_ready;
+
 
 // Declare the external ADC value variable
-extern volatile uint16_t g_AdcValue;
+extern volatile uint16_t V_sens_AdcValue;
+extern volatile uint16_t I_sens_AdcValue;
+
 
 // Variable to keep track of the number of graphene strips to be read
 extern uint8_t g_strip_count;
 
+
 // 2D Array to store the read values from the ADC, corresponding strip number, and in the future the timestamp
-extern uint32_t g_strip_values[MAX_STRIP_COUNT][2];
+extern uint32_t V_sens_strip_values[MAX_STRIP_COUNT][2];
+extern uint32_t I_sens_strip_values[MAX_STRIP_COUNT][2];
+
 
 // Variable to keep track of the timestamp in ms
 extern volatile uint32_t g_timestamp_ms;
 
+/*MUX parameters*/
+// Global parameters
+extern uint8_t MUX_enable;
+extern uint8_t MUX_channel;
+extern uint16_t MUX_freq;
+
+/*DAC parameters for the excitation voltage*/
+extern bool g_excitation_voltage_on;
+extern float g_excitation_voltage_per_resistor;
+extern uint8_t g_resistor_formation;
+
+extern bool active_strips[8];
+
+// Function prototypes
 
 #endif // GLOBAL_H

@@ -155,6 +155,85 @@ void BOARD_InitPins(void)
 
                       /* Input Buffer Enable: Disables. */
                       | PORT_PCR_IBE(PCR_IBE_ibe0));
+
+
+    /* PORT4_21 (pin T11) is configured as ADC1_B6 */
+    PORT_SetPinMux(PORT4, 21U, kPORT_MuxAlt0);
+
+    PORT4->PCR[21] = ((PORT4->PCR[21] &
+                       /* Mask bits to zero which are setting */
+                       (~(PORT_PCR_IBE_MASK)))
+
+                      /* Input Buffer Enable: Disables. */
+                      | PORT_PCR_IBE(PCR_IBE_ibe0));
+
+    /*MUX pins*/
+
+    /* PORT4_12 (pin T6) is configured as PIO4_12 */
+    PORT_SetPinMux(PORT4, 12U, kPORT_MuxAlt0);
+
+    /*LSB*/
+    PORT4->PCR[12] = ((PORT4->PCR[12] &
+                       /* Mask bits to zero which are setting */
+                       (~(PORT_PCR_IBE_MASK)))
+
+                      /* Input Buffer Enable: Enables. */
+                      | PORT_PCR_IBE(PCR_IBE_ibe1));
+
+    /* PORT4_14 (pin N8) is configured as PIO4_14 */
+    PORT_SetPinMux(PORT4, 14U, kPORT_MuxAlt0);
+
+    /*middle bit*/
+    PORT4->PCR[14] = ((PORT4->PCR[14] &
+                       /* Mask bits to zero which are setting */
+                       (~(PORT_PCR_IBE_MASK)))
+
+                      /* Input Buffer Enable: Enables. */
+                      | PORT_PCR_IBE(PCR_IBE_ibe1));
+
+    /* PORT4_16 (pin R8) is configured as PIO4_16 */
+    PORT_SetPinMux(PORT4, 16U, kPORT_MuxAlt0);
+
+    /*MSB*/
+    PORT4->PCR[16] = ((PORT4->PCR[16] &
+                       /* Mask bits to zero which are setting */
+                       (~(PORT_PCR_IBE_MASK)))
+
+                      /* Input Buffer Enable: Enables. */
+                      | PORT_PCR_IBE(PCR_IBE_ibe1));
+
+    /*Enable pin*/
+    PORT4->PCR[18] = ((PORT4->PCR[18] &
+                       /* Mask bits to zero which are setting */
+                       (~(PORT_PCR_IBE_MASK)))
+
+                      /* Input Buffer Enable: Enables. */
+                      | PORT_PCR_IBE(PCR_IBE_ibe1));
+
+
+    /*DAC for the excitation voltge*/
+    const port_pin_config_t port4_2_pinT1_config = {/* Internal pull-up/down resistor is disabled */
+                                                    kPORT_PullDisable,
+                                                    /* Low internal pull resistor value is selected. */
+                                                    kPORT_LowPullResistor,
+                                                    /* Fast slew rate is configured */
+                                                    kPORT_FastSlewRate,
+                                                    /* Passive input filter is disabled */
+                                                    kPORT_PassiveFilterDisable,
+                                                    /* Open drain output is disabled */
+                                                    kPORT_OpenDrainDisable,
+                                                    /* Low drive strength is configured */
+                                                    kPORT_LowDriveStrength,
+                                                    /* Pin is configured as DAC0_OUT */
+                                                    kPORT_MuxAlt0,
+                                                    /* Digital input disabled; it is required for analog functions */
+                                                    kPORT_InputBufferDisable,
+                                                    /* Digital input is not inverted */
+                                                    kPORT_InputNormal,
+                                                    /* Pin Control Register fields [15:0] are not locked */
+                                                    kPORT_UnlockRegister};
+    /* PORT4_2 (pin T1) is configured as DAC0_OUT */
+    PORT_SetPinConfig(PORT4, 2U, &port4_2_pinT1_config);
 }
 /*****************************************
  * EOF

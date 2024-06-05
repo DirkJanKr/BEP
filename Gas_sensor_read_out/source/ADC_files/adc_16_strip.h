@@ -4,12 +4,9 @@
 #include <stdint.h>
 
 // Function to initialize the ADC
-void ADC_Initialize(void);
+void ADC_Voltage_Initialize(void);
 
-void ADC_timer_setup(float mux_freq);
+void ADC_Voltage_timer_setup(void);
 
-void ADC_Callback(uint32_t flags);
-
-void ADC_ContinuousRead(void);
-
+void ADC_Current_Initialize(void);
 #endif
