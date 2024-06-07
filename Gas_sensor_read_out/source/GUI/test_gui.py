@@ -1,5 +1,5 @@
 import threading
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QLineEdit, QComboBox, QFormLayout, QPushButton, QGridLayout, QTextEdit, QMessageBox
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QLineEdit, QComboBox, QFormLayout, QPushButton, QGridLayout, QTextEdit, QMessageBox, QSizePolicy
 from PySide6.QtCore import Qt, Signal, Slot, QObject
 from PySide6.QtGui import QPixmap
 import serial
@@ -45,8 +45,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Styled GUI")
-        self.setGeometry(100, 100, 1080, 720)
-
+        self.showMaximized()
         # Load and apply the stylesheet
         with open("source/GUI/styles.qss", "r") as f:
             self.setStyleSheet(f.read())
@@ -96,11 +95,12 @@ class MainWindow(QMainWindow):
         serial_port_label.setStyleSheet("QLabel { border: none; }")  # Remove border from label
         self.serial_port_input = QLineEdit()
         self.serial_port_input.setPlaceholderText("Enter serial port (e.g., COM12 or /dev/ttyUSB0)")
-        self.serial_port_input.setFixedWidth(200)
+        self.serial_port_input.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
         
         connect_button = QPushButton("Connect")
         connect_button.setObjectName("connectButton")  # Set an object name for styling
-        connect_button.setFixedSize(200, 40)  # Set button size
+        connect_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
+        connect_button.setMinimumHeight(25)
         connect_button.clicked.connect(self.connect_serial_port)  # Connect to the connect_serial_port method
 
         # Layout for serial port input and connect button
@@ -122,11 +122,11 @@ class MainWindow(QMainWindow):
         strip_buttons_layout.setAlignment(Qt.AlignCenter)
 
         self.strip_buttons = []
-        fixed_width = 200
         for i in range(8):
             button = QPushButton(f"Strip {i + 1}")
             button.setCheckable(True)
-            button.setFixedSize(fixed_width / 2, 40)
+            button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
+            button.setMinimumHeight(25)
             button.clicked.connect(lambda _, x=i: self.toggle_strip(x))
             self.strip_buttons.append(button)
             strip_buttons_layout.addWidget(button, i // 4, i % 4)
@@ -136,45 +136,57 @@ class MainWindow(QMainWindow):
         input_container.setStyleSheet("QFrame { border: none; }")  # Remove border from input container
         input_layout = QFormLayout(input_container)
         input_layout.setContentsMargins(0, 0, 0, 0)
-        input_layout.setSpacing(10)
+        input_layout.setSpacing(5)
 
         # Excitation Voltage per strip
+        excitation_voltage_label = QLabel("Excitation Voltage per Strip:")
+        excitation_voltage_label.setObjectName("inputLabel")  # CHANGED: Set a common object name for stylesheet
         self.excitation_voltage_input = QLineEdit()
         self.excitation_voltage_input.setPlaceholderText("Enter Excitation Voltage")
-        self.excitation_voltage_input.setFixedWidth(fixed_width)
-        input_layout.addRow(QLabel("Excitation Voltage per Strip:"), self.excitation_voltage_input)
+        self.excitation_voltage_input.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
+        input_layout.addRow(excitation_voltage_label, self.excitation_voltage_input)
 
         # MUX Frequency
+        mux_freq_label = QLabel("MUX Frequency:")
+        mux_freq_label.setObjectName("inputLabel")  # CHANGED: Set a common object name for stylesheet
         self.mux_freq_input = QLineEdit()
         self.mux_freq_input.setPlaceholderText("Enter MUX Frequency")
-        self.mux_freq_input.setFixedWidth(fixed_width)
-        input_layout.addRow(QLabel("MUX Frequency:"), self.mux_freq_input)
+        self.mux_freq_input.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
+        input_layout.addRow(mux_freq_label, self.mux_freq_input)
 
         # Wave Frequency
+        wave_freq_label = QLabel("Wave Frequency:")
+        wave_freq_label.setObjectName("inputLabel")  # CHANGED: Set a common object name for stylesheet
         self.wave_freq_input = QLineEdit()
         self.wave_freq_input.setPlaceholderText("Enter Wave Frequency")
-        self.wave_freq_input.setFixedWidth(fixed_width)
-        input_layout.addRow(QLabel("Wave Frequency:"), self.wave_freq_input)
+        self.wave_freq_input.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
+        input_layout.addRow(wave_freq_label, self.wave_freq_input)
 
         # Wave Type
+        wave_type_label = QLabel("Wave Type:")
+        wave_type_label.setObjectName("inputLabel")  # CHANGED: Set a common object name for stylesheet
         self.wave_type_dropdown = QComboBox()
         self.wave_type_dropdown.addItem("Sine wave")  # Add entry to dropdown
         self.wave_type_dropdown.addItem("Square wave")  # Add entry to dropdown
         self.wave_type_dropdown.addItem("Triangle wave")  # Add entry to dropdown
-        self.wave_type_dropdown.setFixedWidth(fixed_width)
-        input_layout.addRow(QLabel("Wave Type:"), self.wave_type_dropdown)
+        self.wave_type_dropdown.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
+        input_layout.addRow(wave_type_label, self.wave_type_dropdown)
 
         # Wave Amplitude
+        wave_amp_label = QLabel("Wave Amplitude:")
+        wave_amp_label.setObjectName("inputLabel")  # CHANGED: Set a common object name for stylesheet
         self.wave_amp_input = QLineEdit()
         self.wave_amp_input.setPlaceholderText("Enter Wave Amplitude")
-        self.wave_amp_input.setFixedWidth(fixed_width)
-        input_layout.addRow(QLabel("Wave Amplitude:"), self.wave_amp_input)
+        self.wave_amp_input.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
+        input_layout.addRow(wave_amp_label, self.wave_amp_input)
 
         # Duty Cycle
+        duty_cycle_label = QLabel("Duty Cycle:")
+        duty_cycle_label.setObjectName("inputLabel")  # CHANGED: Set a common object name for stylesheet
         self.duty_cycle_input = QLineEdit()
         self.duty_cycle_input.setPlaceholderText("Enter Duty Cycle")
-        self.duty_cycle_input.setFixedWidth(fixed_width)
-        input_layout.addRow(QLabel("Duty Cycle:"), self.duty_cycle_input)        
+        self.duty_cycle_input.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
+        input_layout.addRow(duty_cycle_label, self.duty_cycle_input)
 
         # Create a container for buttons with a vertical layout to stack them
         button_container = QFrame()
@@ -185,14 +197,16 @@ class MainWindow(QMainWindow):
         # Button to set the parameters and start measurement
         start_button = QPushButton("Start Measurement")
         start_button.setObjectName("startButton")  # Set an object name for styling
-        start_button.setFixedSize(fixed_width, 40)  # Set button size
+        start_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
+        start_button.setMinimumHeight(25)
         start_button.clicked.connect(self.start_measurement)  # Connect to the start_measurement method
         button_layout.addWidget(start_button)
 
         # Button to download data as CSV file
         download_button = QPushButton("Download Data")
         download_button.setObjectName("downloadButton")  # Set an object name for styling
-        download_button.setFixedSize(fixed_width, 40)  # Set button size
+        download_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
+        download_button.setMinimumHeight(25)
         button_layout.addWidget(download_button)
 
         # Create a container for the manual heater control label and button
@@ -209,7 +223,8 @@ class MainWindow(QMainWindow):
         # Button to toggle heater
         self.heater_button = QPushButton("Current state: heater off")
         self.heater_button.setObjectName("heaterButton")
-        self.heater_button.setFixedSize(fixed_width, 40)  # Set button size
+        self.heater_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
+        self.heater_button.setMinimumHeight(25)
         self.heater_button.setStyleSheet("background-color: red;")
         self.heater_button.clicked.connect(self.toggle_heater)
         heater_layout.addWidget(manual_heater_control_label)
@@ -218,7 +233,7 @@ class MainWindow(QMainWindow):
         # Main layout for top left frame
         top_left_frame_layout = QVBoxLayout(top_left_frame)
         top_left_frame_layout.setContentsMargins(10, 10, 10, 10)  # Set margins
-        top_left_frame_layout.setSpacing(20)  # Set spacing between elements
+        top_left_frame_layout.setSpacing(0)  # Set spacing between elements
         top_left_frame_layout.addWidget(logo_label)
         top_left_frame_layout.addLayout(serial_layout)  # Add the serial port layout
         top_left_frame_layout.addWidget(select_active_strips_label)  # Add the label for selecting active strips
@@ -258,6 +273,58 @@ class MainWindow(QMainWindow):
         msg_box.setText(message)
         msg_box.exec_()
 
+    def validate_excitation_voltage(self):
+        try:
+            value = float(self.excitation_voltage_input.text())
+            if not (0.5 <= value <= 1.0):
+                raise ValueError("Value out of range")
+            return True
+        except ValueError:
+            self.show_error_message("Invalid excitation voltage. Please enter a value between 0.5 and 1.0.")
+            return False
+
+    # Check if the MUX frequency is an integer
+    def validate_mux_frequency(self):
+        try:
+            value = int(self.mux_freq_input.text())
+            return True
+        except ValueError:
+            self.show_error_message("Invalid MUX frequency. Please enter an integer value.")
+            return False
+
+    # Check if the wave frequency of DAC hot plate is within range of 0.002 and 0.5 Hz
+    def validate_wave_frequency(self):
+        try:
+            value = float(self.wave_freq_input.text())
+            if not (0.002 <= value <= 0.5):
+                raise ValueError("Value out of range")
+            return True
+        except ValueError:
+            self.show_error_message("Invalid wave frequency. Please enter a value between 0.002 and 0.5 Hz.")
+            return False
+
+    # Check if the DAC hot plate voltage is within range of 0 to 23V    
+    def validate_dac_hot_plate_voltage(self):
+        try:
+            value = float(self.wave_amp_input.text())
+            if not (0 <= value <= 23):
+                raise ValueError("Value out of range")
+            return True
+        except ValueError:
+            self.show_error_message("Invalid DAC hot plate voltage. Please enter a value between 0 and 23V.")
+            return False
+
+    # Check if the duty cycle is an integer and between and including 0 to 100
+    def validate_duty_cycle(self):
+        try:
+            value = int(self.duty_cycle_input.text())
+            if not (0 <= value <= 100):
+                raise ValueError("Value out of range")
+            return True
+        except ValueError:
+            self.show_error_message("Invalid duty cycle. Please enter an integer value between 0 and 100.")
+            return False
+
     def toggle_strip(self, index):
         button = self.strip_buttons[index]
         self.strip_selection[index] = 1 if button.isChecked() else 0
@@ -277,6 +344,18 @@ class MainWindow(QMainWindow):
         print(self.heater_button.text())
 
     def start_measurement(self):
+        if not self.validate_excitation_voltage():
+            return
+        if not self.validate_mux_frequency():
+            return
+        if not self.validate_wave_frequency():
+            return
+        if not self.validate_dac_hot_plate_voltage():
+            return
+        if not self.validate_duty_cycle():
+            return
+
+
         waveType = self.wave_type_dropdown.currentIndex()  # Get the wave type as an integer
         dutyCycle = int(self.duty_cycle_input.text())
         desiredFrequency = float(self.wave_freq_input.text())
@@ -305,7 +384,7 @@ class MainWindow(QMainWindow):
         plot_label = QLabel()
         plot_label.setObjectName("plotLabel")
         pixmap = QPixmap("source/GUI/example_plot.png")  # Replace with the actual path to your image
-        plot_label.setPixmap(pixmap.scaled(720, 480, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        plot_label.setPixmap(pixmap.scaled(480, 320, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         plot_label.setAlignment(Qt.AlignCenter)
         plot_label.setStyleSheet("QLabel#plotLabel { border: none; }")
 
