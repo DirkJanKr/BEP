@@ -129,6 +129,20 @@ void ADC1_IRQHandler(void) {
  * This function sets up the ADC with the required configurations and calibrations.
  */
 void ADC_Voltage_Initialize(void) {
+    // Enable the Vref to make a 1.2V reference voltage for the ADC
+    SPC0->ACTIVE_CFG1 |= 0x1;
+
+    vref_config_t vrefConfig_12;
+
+    VREF_GetDefaultConfig(&vrefConfig_12);
+    vrefConfig_12.bufferMode = kVREF_ModeLowPowerBuffer;
+    // vrefConfig_12.enableHCBandgap = false;
+
+    VREF_Init(VREF0, &vrefConfig_12);
+
+    // Set voltage to 1.2V
+    VREF_SetTrim21Val(VREF0, 2U);
+
     lpadc_config_t mLpadcConfigStruct;
     lpadc_conv_trigger_config_t mLpadcTriggerConfigStruct;
     lpadc_conv_command_config_t mLpadcCommandConfigStruct;
@@ -148,7 +162,7 @@ void ADC_Voltage_Initialize(void) {
 
     LPADC_GetDefaultConfig(&mLpadcConfigStruct);
     mLpadcConfigStruct.enableAnalogPreliminary = true;
-    mLpadcConfigStruct.referenceVoltageSource = Voltage_LPADC_VREF_SOURCE;
+    mLpadcConfigStruct.referenceVoltageSource = kLPADC_ReferenceVoltageAlt2;
     mLpadcConfigStruct.conversionAverageMode = kLPADC_ConversionAverage1024;
     LPADC_Init(Voltage_LPADC_BASE, &mLpadcConfigStruct);
     LPADC_DoOffsetCalibration(Voltage_LPADC_BASE);
@@ -170,6 +184,19 @@ void ADC_Voltage_Initialize(void) {
 }
 
 void ADC_Current_Initialize(void) {
+    // Enable the Vref to make a 1.2V reference voltage for the ADC
+    SPC0->ACTIVE_CFG1 |= 0x1;
+
+    vref_config_t vrefConfig_12_cur;
+
+    VREF_GetDefaultConfig(&vrefConfig_12_cur);
+    vrefConfig_12_cur.bufferMode = kVREF_ModeLowPowerBuffer;
+
+    VREF_Init(VREF0, &vrefConfig_12_cur);
+
+    // Set voltage to 1.2V
+    VREF_SetTrim21Val(VREF0, 2U);    
+
     lpadc_config_t mLpadcConfigStruct;
     lpadc_conv_trigger_config_t mLpadcTriggerConfigStruct;
     lpadc_conv_command_config_t mLpadcCommandConfigStruct;
@@ -189,7 +216,7 @@ void ADC_Current_Initialize(void) {
 
     LPADC_GetDefaultConfig(&mLpadcConfigStruct);
     mLpadcConfigStruct.enableAnalogPreliminary = true;
-    mLpadcConfigStruct.referenceVoltageSource = Current_LPADC_VREF_SOURCE;
+    mLpadcConfigStruct.referenceVoltageSource = kLPADC_ReferenceVoltageAlt2;
     mLpadcConfigStruct.conversionAverageMode = kLPADC_ConversionAverage1024;
     LPADC_Init(Current_LPADC_BASE, &mLpadcConfigStruct);
 
