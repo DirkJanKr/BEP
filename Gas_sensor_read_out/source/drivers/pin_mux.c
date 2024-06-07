@@ -156,6 +156,7 @@ void BOARD_InitPins(void)
                       /* Input Buffer Enable: Disables. */
                       | PORT_PCR_IBE(PCR_IBE_ibe0));
 
+<<<<<<< Updated upstream
 
     /* PORT4_21 (pin T11) is configured as ADC1_B6 */
     PORT_SetPinMux(PORT4, 21U, kPORT_MuxAlt0);
@@ -174,6 +175,16 @@ void BOARD_InitPins(void)
 
     /*LSB*/
     PORT4->PCR[12] = ((PORT4->PCR[12] &
+=======
+    /* PORT4_12 (pin T6) is configured as PIO4_12 */
+    PORT_SetPinMux(PORT4, 12U, kPORT_MuxAlt0);
+
+
+/*Pins for the MUX*/
+
+    /*Least significant bit for the MUX*/ 
+    PORT4->PCR[12] = ((PORT4->PCR[12] &  
+>>>>>>> Stashed changes
                        /* Mask bits to zero which are setting */
                        (~(PORT_PCR_IBE_MASK)))
 
@@ -183,8 +194,13 @@ void BOARD_InitPins(void)
     /* PORT4_14 (pin N8) is configured as PIO4_14 */
     PORT_SetPinMux(PORT4, 14U, kPORT_MuxAlt0);
 
+<<<<<<< Updated upstream
     /*middle bit*/
     PORT4->PCR[14] = ((PORT4->PCR[14] &
+=======
+  /*Middle bit for the MUX*/
+    PORT4->PCR[14] = ((PORT4->PCR[14] & 
+>>>>>>> Stashed changes
                        /* Mask bits to zero which are setting */
                        (~(PORT_PCR_IBE_MASK)))
 
@@ -194,7 +210,12 @@ void BOARD_InitPins(void)
     /* PORT4_16 (pin R8) is configured as PIO4_16 */
     PORT_SetPinMux(PORT4, 16U, kPORT_MuxAlt0);
 
+<<<<<<< Updated upstream
     /*MSB*/
+=======
+
+  /*Most significant bit for the MUX*/
+>>>>>>> Stashed changes
     PORT4->PCR[16] = ((PORT4->PCR[16] &
                        /* Mask bits to zero which are setting */
                        (~(PORT_PCR_IBE_MASK)))
@@ -202,13 +223,18 @@ void BOARD_InitPins(void)
                       /* Input Buffer Enable: Enables. */
                       | PORT_PCR_IBE(PCR_IBE_ibe1));
 
+<<<<<<< Updated upstream
     /*Enable pin*/
+=======
+    /*Enable MUX*/
+>>>>>>> Stashed changes
     PORT4->PCR[18] = ((PORT4->PCR[18] &
                        /* Mask bits to zero which are setting */
                        (~(PORT_PCR_IBE_MASK)))
 
                       /* Input Buffer Enable: Enables. */
                       | PORT_PCR_IBE(PCR_IBE_ibe1));
+<<<<<<< Updated upstream
 
 
     /*DAC for the excitation voltge*/
@@ -234,6 +260,8 @@ void BOARD_InitPins(void)
                                                     kPORT_UnlockRegister};
     /* PORT4_2 (pin T1) is configured as DAC0_OUT */
     PORT_SetPinConfig(PORT4, 2U, &port4_2_pinT1_config);
+=======
+>>>>>>> Stashed changes
 }
 /*****************************************
  * EOF

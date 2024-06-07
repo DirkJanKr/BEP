@@ -1,6 +1,11 @@
 #include "fsl_gpio.h"
+<<<<<<< Updated upstream
 #include "source/drivers/pin_mux.h"
 #include "source/drivers/clock_config.h"
+=======
+#include "pin_mux.h"
+#include "clock_config.h"
+>>>>>>> Stashed changes
 #include "board.h"
 #include "fsl_debug_console.h"
 #include "fsl_common.h"
@@ -9,6 +14,10 @@
 #include <string.h>
 #include "fsl_port.h"
 #include "gpio_for_mux.h"
+<<<<<<< Updated upstream
+=======
+#include "fsl_debug_console.h"
+>>>>>>> Stashed changes
 #include "source/global.h"
 
 /*!
@@ -33,19 +42,32 @@ void InitMuxGpio(void)
 /*!
  * @brief Sets the GPIO pins to select the desired channel on the MUX36S08.
  *
+<<<<<<< Updated upstream
  *
  */
 void SelectMuxChannel(uint8_t MUX_channel)
 {
     // Adjust the channel range to 0-7 internally
     uint8_t adjustedChannel = MUX_channel - 1;
+=======
+ * @param channel The desired channel to select (1-8).
+ */
+void SelectMuxChannel(uint8_t channel)
+{
+    // Adjust the channel range to 0-7 internally
+    uint8_t adjustedChannel = channel - 1;
+>>>>>>> Stashed changes
 
     // Set GPIO pins based on the channel number
     GPIO_PinWrite(BOARD_INITPINS_GPIO_PORT, GPIO_PIN_S0, (adjustedChannel & 0x01));
     GPIO_PinWrite(BOARD_INITPINS_GPIO_PORT, GPIO_PIN_S1, (adjustedChannel & 0x02) >> 1);
     GPIO_PinWrite(BOARD_INITPINS_GPIO_PORT, GPIO_PIN_S2, (adjustedChannel & 0x04) >> 2);
 
+<<<<<<< Updated upstream
     PRINTF("Selected MUX channel: %d\r\n", MUX_channel);
+=======
+    PRINTF("Selected MUX channel: %d\r\n", channel);
+>>>>>>> Stashed changes
 
     uint32_t s0State = GPIO_PinRead(BOARD_INITPINS_GPIO_PORT, GPIO_PIN_S0);
     uint32_t s1State = GPIO_PinRead(BOARD_INITPINS_GPIO_PORT, GPIO_PIN_S1);
@@ -78,6 +100,7 @@ void DisableMux(void)
     PRINTF("MUX disabled. All pins are off.\r\n");
 }
 
+<<<<<<< Updated upstream
 void ProcessMuxControl(void)
 {
     if (MUX_enable)
@@ -96,6 +119,16 @@ void ProcessMuxControl(void)
 
 //  * @brief Main function
 //  */
+=======
+
+/*!
+ * @brief Main function
+ */
+
+
+/*To add to the main.c file later on*/
+
+>>>>>>> Stashed changes
 // int main(void)
 // {
 //     // Initialize the hardware
@@ -106,4 +139,7 @@ void ProcessMuxControl(void)
 
 //     // Initialize MUX GPIO pins
 //     InitMuxGpio();
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
