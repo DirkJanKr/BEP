@@ -23,12 +23,13 @@ volatile uint16_t V_sens_AdcValue = 0;
 
 
 // Variable to keep track of the number of graphene strips to be read
-uint8_t g_strip_count = MAX_STRIP_COUNT;
+uint8_t g_strip_count = 0;
 
 // 2D Array to store the read values from the ADC, corresponding strip number, and in the future the timestamp
-uint32_t I_sens_strip_values[MAX_STRIP_COUNT][2];
-uint32_t V_sens_strip_values[MAX_STRIP_COUNT][2];
+uint32_t I_sens_strip_values[8][2];
+uint32_t V_sens_strip_values[8][2];
 
+int resistance_array[8][2] = {0};
 
 // Variable to keep track of the timestamp in ms
 volatile uint32_t g_timestamp_ms = 0;
@@ -44,6 +45,9 @@ float g_excitation_voltage_per_resistor = 1.0; // in volts;
 uint8_t g_resistor_formation = 8;
 
 bool active_strips[8] = {false, false, false, false, false, false, false, false};
+
+// Value to store the result of the curr strip
+uint32_t current_adc_result = 0;
 
 // Function prototypes
 

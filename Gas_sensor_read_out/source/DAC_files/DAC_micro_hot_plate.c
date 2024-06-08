@@ -79,7 +79,7 @@ void generateTriangleWave(uint32_t *values, uint32_t size) {
 * @brief Update the DAC output with the next value in the buffer.
 */
 void dac_update_callback(uint32_t flags) {
-    PRINTF("DAC value: %d\n", g_Dac14Values[g_Dac14InputIndex]);
+    // PRINTF("DAC value: %d\n", g_Dac14Values[g_Dac14InputIndex]);
     DAC14_SetData(DEMO_DAC14_BASEADDR, g_Dac14Values[g_Dac14InputIndex]);
     g_Dac14InputIndex = (g_Dac14InputIndex + 1) % g_Dac14ValueArraySize;
     DAC14_DoSoftwareTrigger(DEMO_DAC14_BASEADDR);

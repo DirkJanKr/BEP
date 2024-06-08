@@ -75,6 +75,10 @@ const uint32_t V_sens_LpadcResultShift = 0U;
 // Referernce voltage, I am not sure how accurate this 3.3V is and not sure how tocheck this.
 float V_sens_reference_voltage = 3.3;
 
+// Variables to store the sum and count for current adc values
+volatile uint32_t I_sens_Sum = 0;
+volatile uint16_t I_sens_Count = 0;
+
 /*******************************************************************************
  * Code
  ******************************************************************************/
@@ -96,6 +100,7 @@ void ADC0_IRQHandler(void) {
         // Move to the next strip
         current_V_strip++;
         if (current_V_strip >= g_strip_count) {
+
             current_V_strip = 0; // Reset the strip index
             V_sens_strip_values_ready = true; // Set the flag indicating the array is filled
         }
@@ -104,18 +109,30 @@ void ADC0_IRQHandler(void) {
     SDK_ISR_EXIT_BARRIER;
 }
 
-
+// Current ADC interrupt handler
+// This function is called when the ADC conversion is complete and it will calculate the average of the ADC values
+// Since the current can be asumed to be stable over time, the average of the ADC values will be used as the current value
 void ADC1_IRQHandler(void) {
     if (LPADC_GetConvResult(Current_LPADC_BASE, &I_sens_LpadcResultConfigStruct, 0U)) {
         I_sens_LpadcConversionCompletedFlag = true;
         I_sens_AdcValue = (I_sens_LpadcResultConfigStruct.convValue >> I_sens_LpadcResultShift);
 
-        I_sens_strip_values[current_I_strip][0] = I_sens_AdcValue; // Save ADC value
-        I_sens_strip_values[current_I_strip][1] = g_timestamp_ms; // Save timestamp
+        // I_sens_strip_values[current_I_strip][0] = I_sens_AdcValue; // Save ADC value
+        // I_sens_strip_values[current_I_strip][1] = g_timestamp_ms; // Save timestamp
+
+        // Add adc value to total sum
+        I_sens_Sum += I_sens_AdcValue;
+        I_sens_Count++;
 
         // Move to the next strip
         current_I_strip++;
         if (current_I_strip >= g_strip_count) {
+            // Calculate the average of the ADC values
+            current_adc_result = I_sens_Sum / I_sens_Count;
+            PRINTF("Current ADC value: %d\n", current_adc_result);
+            // Reset the sum and count
+            I_sens_Sum = 0;
+            I_sens_Count = 0;
             current_I_strip = 0; // Reset the strip index
             I_sens_strip_values_ready = true; // Set the flag indicating the array is filled
         }
