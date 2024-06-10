@@ -129,7 +129,7 @@ void ADC1_IRQHandler(void) {
         if (current_I_strip >= g_strip_count) {
             // Calculate the average of the ADC values
             current_adc_result = I_sens_Sum / I_sens_Count;
-            PRINTF("Current ADC value: %d\n", current_adc_result);
+            // PRINTF("Current ADC value: %d\n", current_adc_result);
             // Reset the sum and count
             I_sens_Sum = 0;
             I_sens_Count = 0;

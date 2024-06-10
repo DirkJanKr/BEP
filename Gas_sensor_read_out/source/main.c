@@ -110,12 +110,11 @@ void calculate_resistance_array(void) {
         if (active_strips[i]) {
             // Fill in the timestamp in the resistance array
             resistance_array[i][1] = V_sens_strip_values[i][1];
+            
             // Calculate the resistance and round to the nearest integer
             // 0.5 is added to account for truncation when casting to int
-            PRINTF("V_sens_strip_values[%d][0]: %d\n", i, V_sens_strip_values[i][0]);
-            PRINTF("current_adc_result: %d\n", current_adc_result);
+
             resistance_array[i][0] = (int)(((float)V_sens_strip_values[i][0] / (float)current_adc_result) * 120 * 75 + 0.5);
-            PRINTF("Resistance of strip %d: %d, Time: %d\n", i + 1, resistance_array[i][0], resistance_array[i][1]);
         }
     }
 }
@@ -249,9 +248,9 @@ int main(void) {
             // Calculate the resistance array
             calculate_resistance_array();
             // Print the resistance array
-            // for (int i = 0; i < 8; i++) {
-            //     PRINTF("Resistance of strip %d: %d, Time: %d\n", i + 1, resistance_array[i][0], resistance_array[i][1]);
-            // }
+            for (int i = 0; i < 8; i++) {
+                PRINTF("Resistance of strip %d: %d, Time: %d\n", i + 1, resistance_array[i][0], resistance_array[i][1]);
+            }
             // Reset the flags
             V_sens_strip_values_ready = false;
             I_sens_strip_values_ready = false;
