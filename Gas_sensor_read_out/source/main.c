@@ -93,8 +93,33 @@ int updateParameters(char* input) {
         return -1;
     }
 
+    // Caluclate the number of strip based on the active_strips array and store it in g_strip_count
+    for (int i = 0; i < MAX_STRIP_COUNT; i++) {
+        if (active_strips[i]) {
+            g_strip_count++;
+        }
+    }
+
     return 0; // Success
 }
+
+void calculate_resistance_array(void) {
+    // Calculate the resistance array, loop through the active strips array and calculate the resistance of active strips
+    // Leave the false entries at 0. Also add the timestamp from the V_sens_strip_values array
+    for (int i = 0; i < MAX_STRIP_COUNT; i++) {
+        if (active_strips[i]) {
+            // Fill in the timestamp in the resistance array
+            resistance_array[i][1] = V_sens_strip_values[i][1];
+            
+            // Calculate the resistance and round to the nearest integer
+            // 0.5 is added to account for truncation when casting to int
+
+            resistance_array[i][0] = (int)(((float)V_sens_strip_values[i][0] / (float)current_adc_result) * 120 * 75 + 0.5);
+        }
+    }
+}
+
+
 
 int initialize_dac_hot_plate(void) {
     // Initialize the DAC
@@ -218,25 +243,16 @@ int main(void) {
 
     while (1) {
 
-        // Check if the array is filled
-        if (V_sens_strip_values_ready) {
-            // Print the array with the value and time stamp for each strip
-            for (uint8_t i = 0; i < g_strip_count; i++)
-            {
-                PRINTF("Strip %d: Voltage ADC value: %d, Time: %d\n", (i+1), V_sens_strip_values[i][0], V_sens_strip_values[i][1]);
+        // Check if the array is filled and if so calculate the resistance array
+        if (V_sens_strip_values_ready && I_sens_strip_values_ready) {
+            // Calculate the resistance array
+            calculate_resistance_array();
+            // Print the resistance array
+            for (int i = 0; i < 8; i++) {
+                PRINTF("Resistance of strip %d: %d, Time: %d\n", i + 1, resistance_array[i][0], resistance_array[i][1]);
             }
-
-            // Reset the flag
+            // Reset the flags
             V_sens_strip_values_ready = false;
-        }
-
-        if (I_sens_strip_values_ready) {
-            // Print the array with the value and time stamp for each strip
-            for (uint8_t i = 0; i < g_strip_count; i++) {
-                PRINTF("Strip %d: Current ADC value: %d, Time: %d\n", (i+1), I_sens_strip_values[i][0], I_sens_strip_values[i][1]);
-            }
-         
-            // Reset the flag
             I_sens_strip_values_ready = false;
         }
     }

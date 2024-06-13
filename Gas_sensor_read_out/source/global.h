@@ -46,6 +46,8 @@ extern uint8_t g_strip_count;
 extern uint32_t V_sens_strip_values[MAX_STRIP_COUNT][2];
 extern uint32_t I_sens_strip_values[MAX_STRIP_COUNT][2];
 
+extern int resistance_array[8][2];
+
 
 // Variable to keep track of the timestamp in ms
 extern volatile uint32_t g_timestamp_ms;
@@ -62,6 +64,9 @@ extern float g_excitation_voltage_per_resistor;
 extern uint8_t g_resistor_formation;
 
 extern bool active_strips[8];
+
+// Value to store the result of the curr strip
+extern uint32_t current_adc_result;
 
 // Function prototypes
 

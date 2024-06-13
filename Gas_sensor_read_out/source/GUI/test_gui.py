@@ -1,9 +1,14 @@
 import threading
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QLineEdit, QComboBox, QFormLayout, QPushButton, QGridLayout, QTextEdit, QMessageBox, QSizePolicy
-from PySide6.QtCore import Qt, Signal, Slot, QObject
-from PySide6.QtGui import QPixmap
 import serial
 import time
+import pandas as pd
+import csv
+import re
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QLineEdit, QComboBox, QFormLayout, QPushButton, QGridLayout, QTextEdit, QMessageBox, QSizePolicy, QCheckBox
+from PySide6.QtCore import Qt, Signal, Slot, QObject, QTimer
+from PySide6.QtGui import QPixmap
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 class SerialThread(QObject):
     new_data = Signal(str)  # Signal to send new data to the GUI
@@ -24,7 +29,7 @@ class SerialThread(QObject):
         while self.flag:
             try:
                 if self.ser.in_waiting > 0:
-                    response = self.ser.readline().decode().strip()
+                    response = self.ser.readline().decode(errors='ignore').strip()  # Handle decoding errors
                     self.new_data.emit(response)  # Emit signal with new data
             except serial.SerialException as e:
                 print(f"Serial error: {e}")
@@ -39,7 +44,53 @@ class SerialThread(QObject):
         if self.ser is None:
             return
         parameters = f"{waveType},{dutyCycle},{desiredFrequency},{desiredAmplitude},{excitationVoltagePerStrip},{muxFrequency},{strip_selection}\n"
+        print(f"Sending parameters to microcontroller: {parameters}")
         self.ser.write(parameters.encode())
+
+class PlotCanvas(FigureCanvas):
+    def __init__(self, parent=None):
+        self.fig, self.ax = plt.subplots()
+        super().__init__(self.fig)
+        self.setParent(parent)
+        self.ax.set_title('Real-time Resistance Plot')
+        self.ax.set_xlabel('Time (s)')
+        self.ax.set_ylabel('Resistance (Ohms)')
+        self.ax.grid(True)
+        self.strip_visibility = [True] * 8  # Visibility for each strip
+
+    def load_data(self):
+        try:
+            df = pd.read_csv('source/GUI/resistance_data.csv')
+            if df.empty:
+                print("The CSV file is empty.")
+            return df
+        except FileNotFoundError:
+            print("The CSV file was not found.")
+            return pd.DataFrame(columns=['Strip', 'Time (s)', 'Resistance (Ohms)'])
+        except pd.errors.EmptyDataError:
+            print("The CSV file is empty.")
+            return pd.DataFrame(columns=['Strip', 'Time (s)', 'Resistance (Ohms)'])
+
+    def update_plot(self):
+        self.ax.clear()
+        df = self.load_data()
+        if not df.empty:
+            for strip in df['Strip'].unique():
+                if self.strip_visibility[strip - 1]:  # Check if the strip should be visible
+                    strip_data = df[df['Strip'] == strip]
+                    self.ax.plot(strip_data['Time (s)'], strip_data['Resistance (Ohms)'], label=f'Strip {strip}')
+            self.ax.legend(loc='upper right')
+        else:
+            print("No data available for plotting.")
+        self.ax.set_title('Real-time Resistance Plot')
+        self.ax.set_xlabel('Time (s)')
+        self.ax.set_ylabel('Resistance (Ohms)')
+        self.ax.grid(True)
+        self.draw()
+
+    def toggle_strip_visibility(self, strip_index):
+        self.strip_visibility[strip_index] = not self.strip_visibility[strip_index]
+        self.update_plot()
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -75,6 +126,35 @@ class MainWindow(QMainWindow):
         self.serial_thread = None
         self.thread = None
         self.strip_selection = [0] * 8  # Initialize strip selection list
+
+        # Setup a timer to update the plot
+        self.plot_update_timer = QTimer()
+        self.plot_update_timer.timeout.connect(self.update_plot_canvas)
+
+        # Initialize CSV file
+        self.csv_file_path = 'source/GUI/resistance_data.csv'
+        self.init_csv_file()
+
+        # Measurement started flag
+        self.measurement_started = False
+
+    def init_csv_file(self):
+        try:
+            with open(self.csv_file_path, 'r') as csvfile:
+                pass
+        except FileNotFoundError:
+            with open(self.csv_file_path, 'w', newline='') as csvfile:
+                csv_writer = csv.writer(csvfile)
+                csv_writer.writerow(['Strip', 'Time (s)', 'Resistance (Ohms)'])
+        self.csv_file = open(self.csv_file_path, mode='a', newline='')
+        self.csv_writer = csv.writer(self.csv_file)
+
+    def clear_csv_file(self):
+        with open(self.csv_file_path, 'w', newline='') as csvfile:
+            csv_writer = csv.writer(csvfile)
+            csv_writer.writerow(['Strip', 'Time (s)', 'Resistance (Ohms)'])
+        self.csv_file = open(self.csv_file_path, mode='a', newline='')
+        self.csv_writer = csv.writer(self.csv_file)
 
     def create_top_left_frame(self):
         top_left_frame = QFrame()
@@ -249,6 +329,7 @@ class MainWindow(QMainWindow):
         if port:
             self.serial_thread = SerialThread(port)
             self.serial_thread.new_data.connect(self.update_serial_monitor)
+            self.serial_thread.new_data.connect(self.write_to_csv)  # Connect to the CSV writing method
             self.thread = threading.Thread(target=self.serial_thread.run)
             self.thread.start()
             # Check if the serial port was successfully opened
@@ -355,7 +436,6 @@ class MainWindow(QMainWindow):
         if not self.validate_duty_cycle():
             return
 
-
         waveType = self.wave_type_dropdown.currentIndex()  # Get the wave type as an integer
         dutyCycle = int(self.duty_cycle_input.text())
         desiredFrequency = float(self.wave_freq_input.text())
@@ -368,6 +448,14 @@ class MainWindow(QMainWindow):
         if self.serial_thread and self.serial_thread.ser:
             self.serial_thread.send_parameters(waveType, dutyCycle, desiredFrequency, desiredAmplitude, excitationVoltagePerStrip, muxFrequency, strip_selection)
             print("Parameters sent to microcontroller")
+
+            # Clear the CSV file and write headers
+            self.clear_csv_file()
+
+            # Start the plot update timer
+            self.measurement_started = True
+            self.plot_update_timer.start(10000)  # Update every 10 seconds
+
         else:
             self.show_error_message("Serial port not connected.")
 
@@ -375,24 +463,42 @@ class MainWindow(QMainWindow):
     def update_serial_monitor(self, data):
         self.serial_monitor.append(data)  # Append new data to the serial monitor
 
+    @Slot(str)
+    def write_to_csv(self, data):
+        match = re.match(r"Resistance of strip (\d+): (\d+), Time: (\d+)", data)
+        if match:
+            strip = int(match.group(1))
+            resistance = int(match.group(2))
+            time_val = int(match.group(3))
+            time_val_seconds = time_val / 1000  # Convert milliseconds to seconds
+            self.csv_writer.writerow([strip, time_val_seconds, resistance])
+            self.csv_file.flush()  # Ensure the data is written to disk immediately
+
+    def update_plot_canvas(self):
+        if self.measurement_started:
+            self.plot_canvas.update_plot()
+
     def create_top_right_frame(self):
         top_right_frame = QFrame()
         top_right_frame.setObjectName("topRightFrame")
         top_right_frame.setStyleSheet("QFrame#topRightFrame { border: 2px solid grey; border-radius: 5px; }")  # Add outer border to top right frame
 
-        # Add example plot to the top right frame
-        plot_label = QLabel()
-        plot_label.setObjectName("plotLabel")
-        pixmap = QPixmap("source/GUI/example_plot.png")  # Replace with the actual path to your image
-        plot_label.setPixmap(pixmap.scaled(480, 320, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        plot_label.setAlignment(Qt.AlignCenter)
-        plot_label.setStyleSheet("QLabel#plotLabel { border: none; }")
+        self.plot_canvas = PlotCanvas(top_right_frame)
 
         top_right_frame_layout = QVBoxLayout(top_right_frame)
         top_right_frame_layout.setContentsMargins(10, 10, 10, 10)  # Set margins
         top_right_frame_layout.setSpacing(20)  # Set spacing between elements
-        top_right_frame_layout.addWidget(plot_label)
+        top_right_frame_layout.addWidget(self.plot_canvas)
 
+        # Add strip visibility buttons
+        strip_visibility_layout = QHBoxLayout()
+        for i in range(8):
+            checkbox = QCheckBox(f"Strip {i + 1}")
+            checkbox.setChecked(True)
+            checkbox.stateChanged.connect(lambda state, x=i: self.plot_canvas.toggle_strip_visibility(x))
+            strip_visibility_layout.addWidget(checkbox)
+
+        top_right_frame_layout.addLayout(strip_visibility_layout)
         return top_right_frame
 
     def create_bottom_frame(self):
