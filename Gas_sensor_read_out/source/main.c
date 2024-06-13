@@ -255,6 +255,18 @@ int main(void) {
             V_sens_strip_values_ready = false;
             I_sens_strip_values_ready = false;
         }
+
+        // Check if the voltage array is ready and print it if its ready
+        if (V_sens_strip_values_ready) {
+            for (int i = 0; i < 8; i++) {
+                PRINTF("Voltage of strip %d: %d, Time: %d\n", i + 1, V_sens_strip_values[i][0], V_sens_strip_values[i][1]);
+            }
+            PRINTF("curent value: %d\n", current_adc_result);
+            V_sens_strip_values_ready = false;
+        }
+
+        // Print the current value
+
     }
 }   
 
