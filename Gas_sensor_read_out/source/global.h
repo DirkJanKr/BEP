@@ -50,7 +50,6 @@ extern uint32_t I_sens_strip_values[MAX_STRIP_COUNT][2];
 // Variable to keep track of the timestamp in ms
 extern volatile uint32_t g_timestamp_ms;
 
-<<<<<<< Updated upstream
 /*MUX parameters*/
 // Global parameters
 extern uint8_t MUX_enable;
@@ -65,11 +64,5 @@ extern uint8_t g_resistor_formation;
 extern bool active_strips[8];
 
 // Function prototypes
-=======
-//MUX parameters definition
-extern uint8_t MUX_enable;
-extern uint8_t MUX_channel;
-
->>>>>>> Stashed changes
 
 #endif // GLOBAL_H

@@ -34,7 +34,6 @@ uint32_t V_sens_strip_values[MAX_STRIP_COUNT][2];
 // Variable to keep track of the timestamp in ms
 volatile uint32_t g_timestamp_ms = 0;
 
-<<<<<<< Updated upstream
 /*MUX parameters*/
 uint8_t MUX_enable = 0;
 uint8_t MUX_channel;
@@ -56,11 +55,3 @@ bool active_strips[8] = {false, false, false, false, false, false, false, false}
 
 
 
-=======
-#include "mux_control.h"
-#include "fsl_debug_console.h"
-
-//MUX parameters definition
-uint8_t MUX_enable = 0;
-uint8_t MUX_channel;
->>>>>>> Stashed changes
