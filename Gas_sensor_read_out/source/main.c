@@ -9,6 +9,7 @@
 #include "source/ADC_files/adc_16_strip.h"
 #include "source/MUX_files/gpio_for_mux.h"
 #include "source/DAC_files/DAC_excitation_voltage.h"
+#include "source/Modbus_files/modbus.h"
 
 
 // Handler for the SysTick interupt
@@ -182,6 +183,13 @@ int initialize_excitation_dac(void) {
     return 0; // Success
 }
 
+int initialize_modbus(void) {
+    /* Initialize LPUART2 for Modbus*/
+    Modbus_init_UARTs();
+
+    return 0; // Success
+}
+
 int main(void) {
     char buffer[256] = {0};
     int index = 0;
@@ -238,10 +246,19 @@ int main(void) {
     PRINTF("Failed to initialize excitation DAC\n");
     // Handle error
     }
+
+    /* Initialize LPUART2 for Modbus*/
+    if (initialize_modbus() != 0) {
+    PRINTF("Failed to initialize excitation DAC\n");
+    // Handle error
+    }
+
     // Configure Systick for 1ms for the timestamps
     SysTick_Config(SystemCoreClock / 1000U);
 
     while (1) {
+        /* Handle incoming Modbus frames*/
+        HandleModbusFrame(MODBUS_LPUART);
 
         // Check if the array is filled and if so calculate the resistance array
         if (V_sens_strip_values_ready && I_sens_strip_values_ready) {
