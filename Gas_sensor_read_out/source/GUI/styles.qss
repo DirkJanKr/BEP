@@ -45,11 +45,9 @@ QLineEdit {
 QPushButton#startButton {
     background-color: #4CAF50; /* Green */
     color: white;
-    padding: 10px;
     text-align: center;
     text-decoration: none;
-    font-size: 16px;
-    margin: 4px 2px;
+    font-size: 12px;
     border-radius: 12px;
 }
 
@@ -60,11 +58,9 @@ QPushButton#startButton:hover {
 QPushButton#downloadButton {
     background-color: #008CBA; /* Blue */
     color: white;
-    padding: 10px;
     text-align: center;
     text-decoration: none;
-    font-size: 16px;
-    margin: 4px 2px;
+    font-size: 12px;
     border-radius: 12px;
 }
 

@@ -1,4 +1,6 @@
 #include "modbus.h"
+#include "source/global.h"
+#include <math.h>
 
 /*******************************************************************************
  * Variables
@@ -7,24 +9,15 @@ uint16_t inputRegisters[INPUT_REGISTER_COUNT] = {0}; // Array to store input reg
 uint16_t holdingRegisters[HOLDING_REGISTER_COUNT] = {0}; // Array to store holding register values
 
 /*******************************************************************************
- * Initialize LPUART2 for MODBUS and LPUART4 for debug console
+ * Initialize LPUART2 for MODBUS
  ******************************************************************************/
 void Modbus_init_UARTs()
 {
     lpuart_config_t config;
-    lpuart_config_t debugConfig;
 
     /* attach FRO 12M to FLEXCOMM2 (modbus UART) */
     CLOCK_SetClkDiv(kCLOCK_DivFlexcom2Clk, 1u);
     CLOCK_AttachClk(MODBUS_LPUART_CLK_ATTACH);
-
-    /* attach FRO 12M to FLEXCOMM4 (debug console UART) */
-    // CLOCK_SetClkDiv(kCLOCK_DivFlexcom4Clk, 1u);
-    // CLOCK_AttachClk(DEMO_LPUART_CLK_ATTACH);
-
-    // BOARD_InitPins();
-    // BOARD_InitBootClocks();
-    // BOARD_InitDebugConsole();
 
     /*
      * config.baudRate_Bps = 115200U;
@@ -41,22 +34,15 @@ void Modbus_init_UARTs()
     config.baudRate_Bps = BOARD_DEBUG_UART_BAUDRATE;
     config.enableTx     = true;
     config.enableRx     = true;
+    // config.parityMode = kLPUART_ParityEven;
 
     LPUART_Init(MODBUS_LPUART, &config, MODBUS_LPUART_CLK_FREQ);
-
-    // debug console uart
-//     LPUART_GetDefaultConfig(&debugConfig);
-//     debugConfig.baudRate_Bps = BOARD_DEBUG_UART_BAUDRATE;
-//     debugConfig.enableTx     = true;
-//     debugConfig.enableRx     = true;
-
-//     LPUART_Init(DEMO_LPUART, &debugConfig, DEMO_LPUART_CLK_FREQ);
 }
+
 
 /*******************************************************************************
  * Code for handling frames
  ******************************************************************************/
-
 void HandleModbusFrame(LPUART_Type *modbus_uart)
 {
     uint8_t rxBuffer[256] = {0}; 
@@ -89,11 +75,11 @@ void HandleModbusFrame(LPUART_Type *modbus_uart)
             if (length == expectedLength)
             {
                 // Send the received frame to the debug console for inspection
-                // PRINTF("Received Frame: ");
-                // for (int i = 0; i < length; i++) {
-                //     PRINTF("0x%02X ", rxBuffer[i]);
-                // }
-                // PRINTF("\n");
+                PRINTF("Received Frame: ");
+                for (int i = 0; i < length; i++) {
+                    PRINTF("0x%02X ", rxBuffer[i]);
+                }
+                PRINTF("\n");
 
                 // Handle the complete Modbus frame
                 Modbus_HandleRequest(rxBuffer, length);
@@ -157,10 +143,10 @@ uint16_t Modbus_CRC16(const uint8_t *nData, uint16_t wLength)
 /* Handle Modbus request for supported function codes */
 void Modbus_HandleRequest(uint8_t *buffer, uint16_t length)
 {   
-    // PRINTF("Handling frame...\n"); // Debug print
+    PRINTF("Modbus: Handling frame...\n"); // Debug print
     if (length < 8) // Minimum length for a Modbus RTU frame is 8 bytes
     {
-        // PRINTF("Unsupported length: %d", length);
+        PRINTF("Unsupported length: %d", length);
         return;
     }
 
@@ -169,11 +155,11 @@ void Modbus_HandleRequest(uint8_t *buffer, uint16_t length)
 
     if (address != MODBUS_ADDRESS)
     {
-        // PRINTF("Received Address: 0x%02X, Actual Address: 0x%02X \n", address, MODBUS_ADDRESS);
+        PRINTF("Received Address: 0x%02X, Actual Address: 0x%02X \n", address, MODBUS_ADDRESS);
         return;
     }
 
-    // PRINTF("Received Function Code: %02X\n", functionCode); // Debug print
+    PRINTF("Modbus: Received Function Code: %02X\n", functionCode); // Debug print
     
     switch (functionCode)
     {  
@@ -220,8 +206,8 @@ void Modbus_HandleReadHoldingRegister(uint8_t *buffer, uint16_t length)
 
         for (uint16_t i = 0; i < registerCount; i++)
         {
-            txBuffer[3 + i * 2] = (holdingRegisters[startAddress + i] >> 8) & 0xFF;
-            txBuffer[4 + i * 2] = holdingRegisters[startAddress + i] & 0xFF;
+            txBuffer[3 + i * 2] = (holdingRegisters[startAddress + i] >> 8) & 0xFF;  // High data byte
+            txBuffer[4 + i * 2] = holdingRegisters[startAddress + i] & 0xFF;         // Low data byte
         }
 
         uint16_t crc = Modbus_CRC16(txBuffer, 3 + registerCount * 2);
@@ -230,11 +216,11 @@ void Modbus_HandleReadHoldingRegister(uint8_t *buffer, uint16_t length)
 
         LPUART_WriteBlocking(MODBUS_LPUART, txBuffer, responseLength);
 
-        // PRINTF("Response: ");
-        // for (int i = 0; i < sizeof(txBuffer); i++) {
-        //         PRINTF("0x%02X ", txBuffer[i]);
-        //     }
-        // PRINTF("\n");
+        PRINTF("Modbus: Response: ");
+        for (int i = 0; i < sizeof(txBuffer); i++) {
+                PRINTF("0x%02X ", txBuffer[i]);
+            }
+        PRINTF("\n");
     }
 
     else
@@ -249,12 +235,16 @@ void Modbus_HandleReadInputRegister(uint8_t *buffer, uint16_t length)
 {
     //PRINTF("Handling Read Input Registers...\n"); // Debug print
 
-    uint16_t startAddress = (buffer[2] << 8) | buffer[3];
-    uint16_t registerCount = (buffer[4] << 8) | buffer[5];
-    //PRINTF("Start address: 0x%02X, Number of registers: 0x%02X \n", startAddress, registerCount);
+    uint16_t startAddress = (buffer[2] << 8) | buffer[3]; // start address
+    uint16_t registerCount = (buffer[4] << 8) | buffer[5]; // number of registers
 
     if ((startAddress + registerCount) <= INPUT_REGISTER_COUNT)
     {
+        // Map resistance values to input registers
+        for (int i = 0; i < MAX_STRIP_COUNT; i++) {
+            inputRegisters[i] = resistance_array[i][0]; // Resistance value
+        }
+
         uint8_t responseLength = 3 + registerCount * 2 + 2; // Address + Function Code + Byte Count + Data + CRC
         uint8_t txBuffer[responseLength]; // Declare txBuffer with appropriate size
 
@@ -264,8 +254,8 @@ void Modbus_HandleReadInputRegister(uint8_t *buffer, uint16_t length)
 
         for (uint16_t i = 0; i < registerCount; i++)
         {
-            txBuffer[3 + i * 2] = (inputRegisters[startAddress + i] >> 8) & 0xFF;
-            txBuffer[4 + i * 2] = inputRegisters[startAddress + i] & 0xFF;
+            txBuffer[3 + i * 2] = (inputRegisters[startAddress + i] >> 8) & 0xFF;  // High data byte
+            txBuffer[4 + i * 2] = inputRegisters[startAddress + i] & 0xFF;         // Low data byte
         }
 
         uint16_t crc = Modbus_CRC16(txBuffer, 3 + registerCount * 2);
@@ -273,12 +263,6 @@ void Modbus_HandleReadInputRegister(uint8_t *buffer, uint16_t length)
         txBuffer[4 + registerCount * 2] = (crc >> 8) & 0xFF;    // high byte CRC16
 
         LPUART_WriteBlocking(MODBUS_LPUART, txBuffer, responseLength);
-
-        // PRINTF("Response: ");
-        // for (int i = 0; i < sizeof(txBuffer); i++) {
-        //         PRINTF("0x%02X ", txBuffer[i]);
-        //     }
-        // PRINTF("\n");
     }
 
     else
@@ -304,18 +288,29 @@ void Modbus_HandleWriteSingleRegister(uint8_t *buffer, uint16_t length)
     if (address < HOLDING_REGISTER_COUNT)
     {
         holdingRegisters[address] = value;
+        // Update system parameters or send error if illegal data values are present
+        if (Modbus_DataErrorCheck(holdingRegisters) == false)
+        {
+            Modbus_SendError(buffer[0], buffer[1], ERROR_ILLEGAL_DATA_VALUE); // Send error code 0x03
+            return;
+        }
+        else
+        {
+            Modbus_UpdateParameters(holdingRegisters); // Update parameters
+        }
         LPUART_WriteBlocking(MODBUS_LPUART, buffer, 8); // Echo back the request
     }
     else
     {
-        Modbus_SendError(buffer[0], buffer[1], ERROR_ILLEGAL_DATA_ADDRESS);
+        Modbus_SendError(buffer[0], buffer[1], ERROR_ILLEGAL_DATA_ADDRESS); 
+        return;
     }
 }
 
 /* Handle Modbus Write Single Register (Function code 0x06) */
 void Modbus_HandleWriteMultipleRegisters(uint8_t *buffer, uint16_t length)
 {
-    //PRINTF("Handling Write Multiple Registers\n"); // Debug print
+    PRINTF("Handling Write Multiple Registers\n"); // Debug print
 
     if (length < 9) // Check for minimum frame length
     {
@@ -341,6 +336,17 @@ void Modbus_HandleWriteMultipleRegisters(uint8_t *buffer, uint16_t length)
             holdingRegisters[startAddress + i] = value;
         }
 
+        // Update system parameters or send error if illegal data values are present
+        if (Modbus_DataErrorCheck(holdingRegisters) == false)
+        {
+            Modbus_SendError(buffer[0], buffer[1], ERROR_ILLEGAL_DATA_VALUE); // Send error code 0x03
+            return;
+        }
+        else
+        {
+            Modbus_UpdateParameters(holdingRegisters); // Update parameters
+        }
+
         uint8_t response[8];
         response[0] = buffer[0];
         response[1] = buffer[1];
@@ -352,12 +358,83 @@ void Modbus_HandleWriteMultipleRegisters(uint8_t *buffer, uint16_t length)
         uint16_t crc = Modbus_CRC16(response, 6);
         response[6] = crc & 0xFF;
         response[7] = (crc >> 8) & 0xFF;
-        LPUART_WriteBlocking(MODBUS_LPUART, response, sizeof(response));
+        LPUART_WriteBlocking(MODBUS_LPUART, response, sizeof(response)); // Echo back request with new CRC
+
+        PRINTF("Modbus: Response: ");
+        for (int i = 0; i < sizeof(response); i++) {
+                PRINTF("0x%02X ", response[i]);
+            }
+        PRINTF("\n");
     }
     else
     {
         Modbus_SendError(buffer[0], buffer[1], ERROR_ILLEGAL_DATA_ADDRESS);
     }
+}
+
+/* Update received system parameters */
+void Modbus_UpdateParameters(uint16_t *buffer)
+{
+    // Set wavetype --> 1=sine, 2=square, 3=triangle
+    if (buffer[0] != 0)
+    {
+        waveType = buffer[0];
+    }
+
+    // Set Duty cycle
+    if (buffer[1] != 0)
+    {
+        dutyCycle = buffer[1];
+    }
+    
+    // Set wave frequency (mHz)
+    if (buffer[2] != 0)
+    {
+        desiredFrequency = buffer[2];
+    }
+
+    // Set wave amplitude
+    if (buffer[3] != 0)
+    {
+        desiredAmplitude = buffer[3];
+    }
+
+    // Set excitation voltage per strip (mV)
+    if (buffer[4] != 0)
+    {
+        g_excitation_voltage_per_resistor = buffer[4];
+    }
+
+    // Set MUX frequency 
+    if (buffer[5] != 0)
+    {
+        MUX_freq = buffer[5];
+    }
+
+    // Set active strips
+    if (buffer[6] != 0)
+    {
+        for (int i = 0; i < MAX_STRIP_COUNT; i++) {
+        active_strips[i] = (buffer[6] & (1 << i)) != 0;
+        }
+    }
+}
+
+/* Check for illegal parameters, returns false if illegal parameters have been found*/
+bool Modbus_DataErrorCheck(uint16_t *buffer)
+{
+    if (buffer[0] > 2 ||
+        buffer[1] > 100 || 
+        buffer[2] < 2 || 
+        buffer[2] > 5 || 
+        buffer[3] > 23 || 
+        buffer[4] < 500 || 
+        buffer[4] > 1000 || 
+        buffer[5] > 20 || 
+        buffer[6] > (uint16_t)pow(2, MAX_STRIP_COUNT)) {
+        return false;
+    }
+    return true;
 }
 
 /* Send Modbus error response */
@@ -374,18 +451,3 @@ void Modbus_SendError(uint8_t address, uint8_t function, uint8_t errorCode)
 
     LPUART_WriteBlocking(MODBUS_LPUART, frame, 5);
 }
-
-/*******************************************************************************
- * MAIN FUNCTION
- ******************************************************************************/
-/*!
- * @brief Main function
- */
-// int main(void)
-// {
-//     Modbus_init_UARTs();
-//     while (1)
-//     {
-//         HandleModbusFrame(MODBUS_LPUART);
-//     }
-// }

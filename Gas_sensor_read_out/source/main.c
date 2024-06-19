@@ -186,7 +186,6 @@ int initialize_excitation_dac(void) {
 int initialize_modbus(void) {
     /* Initialize LPUART2 for Modbus*/
     Modbus_init_UARTs();
-
     return 0; // Success
 }
 
@@ -249,7 +248,7 @@ int main(void) {
 
     /* Initialize LPUART2 for Modbus*/
     if (initialize_modbus() != 0) {
-    PRINTF("Failed to initialize excitation DAC\n");
+    PRINTF("Failed to initialize LPUART2 for Modbus\n");
     // Handle error
     }
 
@@ -261,26 +260,26 @@ int main(void) {
         HandleModbusFrame(MODBUS_LPUART);
 
         // Check if the array is filled and if so calculate the resistance array
-        if (V_sens_strip_values_ready && I_sens_strip_values_ready) {
-            // Calculate the resistance array
-            calculate_resistance_array();
-            // Print the resistance array
-            for (int i = 0; i < 8; i++) {
-                PRINTF("Resistance of strip %d: %d, Time: %d\n", i + 1, resistance_array[i][0], resistance_array[i][1]);
-            }
-            // Reset the flags
-            V_sens_strip_values_ready = false;
-            I_sens_strip_values_ready = false;
-        }
+        // if (V_sens_strip_values_ready && I_sens_strip_values_ready) {
+        //     // Calculate the resistance array
+        //     calculate_resistance_array();
+        //     // Print the resistance array
+        //     for (int i = 0; i < 8; i++) {
+        //         PRINTF("Resistance of strip %d: %d, Time: %d\n", i + 1, resistance_array[i][0], resistance_array[i][1]);
+        //     }
+        //     // Reset the flags
+        //     V_sens_strip_values_ready = false;
+        //     I_sens_strip_values_ready = false;
+        // }
 
-        // Check if the voltage array is ready and print it if its ready
-        if (V_sens_strip_values_ready) {
-            for (int i = 0; i < 8; i++) {
-                PRINTF("Voltage of strip %d: %d, Time: %d\n", i + 1, V_sens_strip_values[i][0], V_sens_strip_values[i][1]);
-            }
-            PRINTF("curent value: %d\n", current_adc_result);
-            V_sens_strip_values_ready = false;
-        }
+        // // Check if the voltage array is ready and print it if its ready
+        // if (V_sens_strip_values_ready) {
+        //     for (int i = 0; i < 8; i++) {
+        //         PRINTF("Voltage of strip %d: %d, Time: %d\n", i + 1, V_sens_strip_values[i][0], V_sens_strip_values[i][1]);
+        //     }
+        //     PRINTF("curent value: %d\n", current_adc_result);
+        //     V_sens_strip_values_ready = false;
+        // }
 
         // Print the current value
 

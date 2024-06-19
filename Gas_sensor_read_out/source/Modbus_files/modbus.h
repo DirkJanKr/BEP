@@ -7,7 +7,9 @@
 #include "fsl_lpuart.h"
 #include "fsl_clock.h"
 #include "fsl_debug_console.h"
+#include "source/global.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 /*******************************************************************************
  * Definitions
@@ -28,9 +30,17 @@
 #define ERROR_ILLEGAL_DATA_VALUE 0x03
 
 #define MODBUS_ADDRESS        0x01
-#define INPUT_REGISTER_COUNT 16
-#define HOLDING_REGISTER_COUNT 6
+#define INPUT_REGISTER_COUNT 8
+#define HOLDING_REGISTER_COUNT 7
 #define MODBUS_BUFFER_LENGTH 256
+
+/*******************************************************************************************
+ * Parameter (holding) registers indices --> 0: wavetype, 1: Duty cycle, 2: desiredFrequency
+ * 3: desiredAmplitude, 4: excitationVoltagePerStrip, 5: mux freq, 6: active strips(0-8)
+ * 
+ * active strips bit # --> strip 1: bit 0, strip 2: bit 1, ..., strip 8: bit 7
+ *******************************************************************************************/
+
 
 /*******************************************************************************
  * Prototypes
@@ -44,6 +54,9 @@ void Modbus_HandleWriteSingleRegister(uint8_t *buffer, uint16_t length);
 void Modbus_HandleWriteMultipleRegisters(uint8_t *buffer, uint16_t length);
 void Modbus_SendError(uint8_t address, uint8_t function, uint8_t errorCode);
 uint16_t Modbus_CRC16(const uint8_t *nData, uint16_t wLength);
+
+void Modbus_UpdateParameters(uint16_t *buffer);
+bool Modbus_DataErrorCheck(uint16_t *buffer);
 
 /*******************************************************************************
  * Variables
