@@ -9,6 +9,11 @@
 #include "source/ADC_files/adc_16_strip.h"
 #include "source/MUX_files/gpio_for_mux.h"
 #include "source/DAC_files/DAC_excitation_voltage.h"
+#include "source/drivers/fsl_ctimer.h"
+#include "source/drivers/fsl_lpadc.h"
+#include "source/drivers/fsl_dac.h"
+#include "source/drivers/fsl_dac14.h"
+
 
 // prototypes
 int initialize_dac_hot_plate(void);
@@ -134,11 +139,11 @@ int InitializeAllPeripherals(){
         return -1;
     }
 
-    // Initialize the MUX
-    if (initialize_mux() != 0) {
-        PRINTF("Failed to initialize MUX\n");
-        return -1;
-    }
+    // // Initialize the MUX
+    // if (initialize_mux() != 0) {
+    //     PRINTF("Failed to initialize MUX\n");
+    //     return -1;
+    // }
 
     // Initialize the voltage ADC and timer
     if (initialize_voltage_adc() != 0) {
@@ -265,71 +270,49 @@ int TimestampInit(void) {
     return 0; // Success
 }
 
+int ResetAllPeripherals() {
+    // Deinitialize timer for the micro hotplate DAC
+    CTIMER_Deinit(CTIMER4);
+
+    //Deinitialize Dac for the micro hotplate
+    DAC14_Deinit(DEMO_DAC14_BASEADDR);
+
+    // Deinitialize the MUX
+    DisableMux();
+
+    // Deinitialize the voltage ADC timer
+    CTIMER_Deinit(CTIMER2);
+
+    // Deinitialize the voltage ADC
+    LPADC_Deinit(ADC0);
+
+    // Deinitialize the current ADC
+    LPADC_Deinit(ADC1);
+
+    // Deinitialize the excitation DAC
+    DAC_Deinit(DAC0);
+
+    // Deinitialize the timestamp timer
+    SysTick->CTRL &= ~SysTick_CTRL_ENABLE_Msk;  // Disable SysTick Timer
+
+    return 0; // Success
+}
+
 int main(void) {
     char buffer[256] = {0};
     int index = 0;
     char ch;
+    bool Initializationsuccess = false;
   
     BOARD_InitPins();
     BOARD_InitBootClocks();
     BOARD_InitDebugConsole();
 
+
     // enable interupt and set priority for systick interupt
     // NVIC_SetPriority(SysTick_IRQn, 1U);
 
     PRINTF("Waiting for parameters...\n");
-
-    // while (!paramsReceived) {
-    //     ch = GETCHAR();  // Wait and read a character from UART
-    //     buffer[index++] = ch;  // Store the received character in the buffer
-    //     if (ch == '\n' || ch == '\r') {
-    //         buffer[index] = '\0';  // Null-terminate the string
-    //         PRINTF("Received string: %s\n", buffer);  // Print the received string for debugging
-    //         if (updateParameters(buffer) == 0) {
-    //             PRINTF("Parameters received and set.\n");
-    //             paramsReceived = 1;
-
-    //         } else {
-    //             PRINTF("Error receiving parameters. Please resend.\n");
-    //         }
-    //         index = 0;
-    //         buffer[0] = '\0';
-    //     }
-    // }
-
-
-    // // Initialize the DAC and timer
-    // if (initialize_dac_hot_plate() != 0) {
-    // PRINTF("Failed to initialize microhotplate DAC and hot plate\n");
-    // // Handle error
-    // }
-
-    // // Initialize the MUX
-    // if (initialize_mux() != 0) {
-    // PRINTF("Failed to initialize MUX\n");
-    // // Handle error
-    // }
-
-    // // Initialize the ADC and timer
-    // if (initialize_voltage_adc() != 0) {
-    // PRINTF("Failed to initialize ADC and timer\n");
-    // // Handle error
-    // }
-
-    // // Initialize the ADC and timer
-    // if (initialize_current_adc() != 0) {
-    // PRINTF("Failed to initialize ADC and timer\n");
-    // // Handle error
-    // }
-
-    // // Initialize the excitation DAC
-    // if (initialize_excitation_dac() != 0) {
-    // PRINTF("Failed to initialize excitation DAC\n");
-    // // Handle error
-    // }
-
-    // Configure Systick for 1ms for the timestamps
-    // SysTick_Config(SystemCoreClock / 1000U);
 
     while (1) {
 
@@ -338,10 +321,20 @@ int main(void) {
         if (ch == '\n' || ch == '\r') {
             buffer[index] = '\0';  // Null-terminate the string
             PRINTF("Received string: %s\n", buffer);  // Print the received string for debugging
+
+            // reset active strips
+            for (int i = 0; i < 8; i++) {
+                active_strips[i] = false;
+            }
+            if (Initializationsuccess == true) {
+                ResetAllPeripherals();
+                PRINTF("Reset all peripherals\n");
+            }
             // Update parameters and initialize all peripherals
             if (updateParameters(buffer) == 0) {
                 if (InitializeAllPeripherals() != 0) {
                     PRINTF("Failed to initialize all peripherals\n");
+                    Initializationsuccess = true;
                     return -1;
                 }
                 PRINTF("Parameters received and set.\n");

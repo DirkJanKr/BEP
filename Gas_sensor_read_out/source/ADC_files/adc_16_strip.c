@@ -306,6 +306,10 @@ void ADC_Current_Initialize(void) {
  * This function configures the timer to generate interrupts at the desired frequency.
  */
 void ADC_Voltage_timer_setup(void) {
+
+    // Stop the timer if it is already running
+    CTIMER_StopTimer(CTIMER2);
+
     CLOCK_SetClkDiv(kCLOCK_DivCtimer2Clk, 1u);
     CLOCK_AttachClk(kFRO_HF_to_CTIMER2); // Attach FRO 48MHz to CTIMER2.
 
@@ -400,6 +404,8 @@ void CTIMER2_IRQHandler(void) {
     CTIMER_ClearStatusFlags(CTIMER2, kCTIMER_Match0Flag);
     // Trigger ADC conversion
 
+
+
     if (g_strip_count == 0) {
         PRINTF("No active strips\n");
         return;
@@ -409,39 +415,41 @@ void CTIMER2_IRQHandler(void) {
         LPADC_DoSoftwareTrigger(Voltage_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
         for (volatile int i = 0; i < 150; i++); // Small delay
         LPADC_DoSoftwareTrigger(Current_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
-        
-
         currentCountIndex++;
+
     } else {
-        current_active_strip_index = (current_active_strip_index + 1) % g_strip_count;
-        // PRINTF("Current active strip index: %d\n", current_active_strip_index);
-        // Print the active strip indices array for debugging
-        for (uint8_t i = 0; i < g_strip_count; i++) {
-            // PRINTF("Active strip indices: %d\n", active_strip_indices[i]);
-        }
+        // calculate the average of the ADC values
+        current_adc_result = CurrentSum / SoftwareAverageCount;
+        resultVoltage = VoltageSum / SoftwareAverageCount;
 
         // PRINTF("Active channel: %d\n", active_strip_indices[current_active_strip_index]);
         uint8_t currentChannel = active_strip_indices[current_active_strip_index];
-        SelectMuxChannel(currentChannel);
+        // PRINTF("currentChannel: %d\n", currentChannel);
+        // PRINTF("g_tiemstamp_ms: %d\n", g_timestamp_ms);
+        // print the current channel and the timestamp
+        // PRINTF("Current channel: %d, Time: %d\n", currentChannel, g_timestamp_ms);
 
-        current_adc_result = CurrentSum / SoftwareAverageCount;
-        resultVoltage = VoltageSum / SoftwareAverageCount;
-        // PRINTF("Current ADC value: %d\n", current_adc_result);
-        // PRINTF("Voltage ADC value: %d\n", resultVoltage);
         V_sens_strip_values[currentChannel][0] = resultVoltage;
         V_sens_strip_values[currentChannel][1] = g_timestamp_ms; 
+
         CurrentSum = 0;
         VoltageSum = 0;
         currentCountIndex = 0;
 
+        current_active_strip_index = (current_active_strip_index + 1) % g_strip_count;
+
+        // SelectMuxChannel(active_strip_indices[current_active_strip_index]);
+
         if (current_active_strip_index == 0) {
-            // current_active_strip_index = 0; // Reset the strip index
+            // current_adc_result = current_adc_result / g_strip_count;
             // Calculate the resistance array
             calculate_resistance_array();
+            // PRINTF("current_adc_result: %d\n", current_adc_result);
             // Print the resistance array
             for (int i = 0; i < 8; i++) {
                 PRINTF("Resistance of strip %d: %d, Time: %d\n", i + 1, resistance_array[i][0], resistance_array[i][1]);
             }
+            // current_adc_result = 0;
         }
     }
     // LPADC_DoSoftwareTrigger(Current_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
