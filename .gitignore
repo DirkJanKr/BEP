@@ -71,3 +71,4 @@ Desktop.ini
 debug/
 
 .venv/
+Gas_sensor_read_out/source/GUI/resistance_data.csv
