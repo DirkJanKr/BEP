@@ -390,19 +390,19 @@ void Modbus_UpdateParameters(uint16_t *buffer)
     // Set wave frequency (mHz)
     if (buffer[2] != 0)
     {
-        desiredFrequency = buffer[2];
+        desiredFrequency = buffer[2] / 1000;
     }
 
-    // Set wave amplitude
+    // Set wave amplitude (mV)
     if (buffer[3] != 0)
     {
-        desiredAmplitude = buffer[3];
+        desiredAmplitude = buffer[3] / 1000;
     }
 
     // Set excitation voltage per strip (mV)
     if (buffer[4] != 0)
     {
-        g_excitation_voltage_per_resistor = buffer[4];
+        g_excitation_voltage_per_resistor = buffer[4] / 1000;
     }
 
     // Set MUX frequency 
@@ -415,7 +415,7 @@ void Modbus_UpdateParameters(uint16_t *buffer)
     if (buffer[6] != 0)
     {
         for (int i = 0; i < MAX_STRIP_COUNT; i++) {
-        active_strips[i] = (buffer[6] & (1 << i)) != 0;
+            active_strips[i] = (buffer[6] & (1 << i)) != 0;
         }
     }
 }
@@ -424,6 +424,7 @@ void Modbus_UpdateParameters(uint16_t *buffer)
 bool Modbus_DataErrorCheck(uint16_t *buffer)
 {
     if (buffer[0] > 2 ||
+        buffer[0] < 1 ||
         buffer[1] > 100 || 
         buffer[2] < 2 || 
         buffer[2] > 5 || 
