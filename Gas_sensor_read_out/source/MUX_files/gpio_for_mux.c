@@ -38,23 +38,23 @@ void InitMuxGpio(void)
 void SelectMuxChannel(uint8_t MUX_channel)
 {
     // Adjust the channel range to 0-7 internally
-    uint8_t adjustedChannel = MUX_channel - 1;
+    uint8_t adjustedChannel = MUX_channel;
 
     // Set GPIO pins based on the channel number
     GPIO_PinWrite(BOARD_INITPINS_GPIO_PORT, GPIO_PIN_S0, (adjustedChannel & 0x01));
     GPIO_PinWrite(BOARD_INITPINS_GPIO_PORT, GPIO_PIN_S1, (adjustedChannel & 0x02) >> 1);
     GPIO_PinWrite(BOARD_INITPINS_GPIO_PORT, GPIO_PIN_S2, (adjustedChannel & 0x04) >> 2);
 
-    PRINTF("Selected MUX channel: %d\r\n", MUX_channel);
+    // PRINTF("Selected MUX channel: %d\r\n", MUX_channel);
 
-    uint32_t s0State = GPIO_PinRead(BOARD_INITPINS_GPIO_PORT, GPIO_PIN_S0);
-    uint32_t s1State = GPIO_PinRead(BOARD_INITPINS_GPIO_PORT, GPIO_PIN_S1);
-    uint32_t s2State = GPIO_PinRead(BOARD_INITPINS_GPIO_PORT, GPIO_PIN_S2);
+    // uint32_t s0State = GPIO_PinRead(BOARD_INITPINS_GPIO_PORT, GPIO_PIN_S0);
+    // uint32_t s1State = GPIO_PinRead(BOARD_INITPINS_GPIO_PORT, GPIO_PIN_S1);
+    // uint32_t s2State = GPIO_PinRead(BOARD_INITPINS_GPIO_PORT, GPIO_PIN_S2);
 
-    PRINTF("Pin states:\r\n");
-    PRINTF("S0 (P4_12): %d\r\n", s0State);
-    PRINTF("S1 (P4_14): %d\r\n", s1State);
-    PRINTF("S2 (P4_16): %d\r\n", s2State);
+    // PRINTF("Pin states:\r\n");
+    // PRINTF("S0 (P4_12): %d\r\n", s0State);
+    // PRINTF("S1 (P4_14): %d\r\n", s1State);
+    // PRINTF("S2 (P4_16): %d\r\n", s2State);
 }
 
 /*!
