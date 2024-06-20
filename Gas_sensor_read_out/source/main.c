@@ -10,6 +10,14 @@
 #include "source/MUX_files/gpio_for_mux.h"
 #include "source/DAC_files/DAC_excitation_voltage.h"
 
+// prototypes
+int initialize_dac_hot_plate(void);
+int initialize_mux(void);
+int initialize_voltage_adc(void);
+int initialize_current_adc(void);
+int initialize_excitation_dac(void);
+int TimestampInit(void);
+
 
 // Handler for the SysTick interupt
 void SysTick_Handler(void) {
@@ -103,20 +111,67 @@ int updateParameters(char* input) {
     return 0; // Success
 }
 
-void calculate_resistance_array(void) {
-    // Calculate the resistance array, loop through the active strips array and calculate the resistance of active strips
-    // Leave the false entries at 0. Also add the timestamp from the V_sens_strip_values array
-    for (int i = 0; i < MAX_STRIP_COUNT; i++) {
-        if (active_strips[i]) {
-            // Fill in the timestamp in the resistance array
-            resistance_array[i][1] = V_sens_strip_values[i][1];
+// void calculate_resistance_array(void) {
+//     // Calculate the resistance array, loop through the active strips array and calculate the resistance of active strips
+//     // Leave the false entries at 0. Also add the timestamp from the V_sens_strip_values array
+//     for (int i = 0; i < MAX_STRIP_COUNT; i++) {
+//         if (active_strips[i]) {
+//             // Fill in the timestamp in the resistance array
+//             resistance_array[i][1] = V_sens_strip_values[i][1];
             
-            // Calculate the resistance and round to the nearest integer
-            // 0.5 is added to account for truncation when casting to int
+//             // Calculate the resistance and round to the nearest integer
+//             // 0.5 is added to account for truncation when casting to int
 
-            resistance_array[i][0] = (int)(((float)V_sens_strip_values[i][0] / (float)current_adc_result) * 120 * 75 + 0.5);
-        }
+//             resistance_array[i][0] = (int)(((float)V_sens_strip_values[i][0] / (float)current_adc_result) * 120 * 75 + 0.5);
+//         }
+//     }
+// }
+
+int InitializeAllPeripherals(){
+    // Initialize Hot plate dac 
+    if (initialize_dac_hot_plate() != 0) {
+        PRINTF("Failed to initialize microhotplate DAC and hot plate\n");
+        return -1;
     }
+
+    // Initialize the MUX
+    if (initialize_mux() != 0) {
+        PRINTF("Failed to initialize MUX\n");
+        return -1;
+    }
+
+    // Initialize the voltage ADC and timer
+    if (initialize_voltage_adc() != 0) {
+        PRINTF("Failed to initialize ADC and timer\n");
+        return -1;
+    }
+
+    // Initialize the current
+    if (initialize_current_adc() != 0) {
+        PRINTF("Failed to initialize ADC and timer\n");
+        return -1;
+    }
+
+    // Initialize the excitation DAC
+    if (initialize_excitation_dac() != 0) {
+        PRINTF("Failed to initialize excitation DAC\n");
+        return -1;
+    }
+
+    // Initialize the timestamp timer
+    if (TimestampInit() != 0) {
+        PRINTF("Failed to initialize timestamp timer\n");
+        return -1;
+    }
+
+    // Initialze resistance array to 0
+    for (int i = 0; i < 8; i++) {
+        resistance_array[i][0] = 0;
+        resistance_array[i][1] = 0;
+    }
+
+    return 0; // Success
+    
 }
 
 
@@ -157,10 +212,26 @@ int initialize_dac_hot_plate(void) {
     return 0; // Success
 }
 
+int initialize_mux(void) {
+    // Initialize the MUX
+    InitMuxGpio();
+
+    EnableMux();
+
+    /*Select first active MUX channel*/
+    SelectMuxChannel(FirstActiveStrip());
+
+    // fill the array with active indices
+    ConvertActiveStrips();
+
+    return 0; // Success
+}
+
+
 int initialize_voltage_adc(void) {
     // Initialize the ADC
     ADC_Voltage_Initialize();
-
+    
     return 0; // Success
 }
 
@@ -182,79 +253,137 @@ int initialize_excitation_dac(void) {
     return 0; // Success
 }
 
+int TimestampInit(void) {
+    // Reset the timestamp if a new mearement has started
+    g_timestamp_ms = 0;
+    // Configure Systick for 1ms for the timestamps
+    SysTick_Config(SystemCoreClock / 1000U);
+
+    // enable interupt and set priority for systick interupt
+    NVIC_SetPriority(SysTick_IRQn, 1U);
+
+    return 0; // Success
+}
+
 int main(void) {
     char buffer[256] = {0};
     int index = 0;
     char ch;
-    int paramsReceived = 0;  
   
     BOARD_InitPins();
     BOARD_InitBootClocks();
     BOARD_InitDebugConsole();
 
     // enable interupt and set priority for systick interupt
-    NVIC_SetPriority(SysTick_IRQn, 1U);
+    // NVIC_SetPriority(SysTick_IRQn, 1U);
 
     PRINTF("Waiting for parameters...\n");
 
-    while (!paramsReceived) {
+    // while (!paramsReceived) {
+    //     ch = GETCHAR();  // Wait and read a character from UART
+    //     buffer[index++] = ch;  // Store the received character in the buffer
+    //     if (ch == '\n' || ch == '\r') {
+    //         buffer[index] = '\0';  // Null-terminate the string
+    //         PRINTF("Received string: %s\n", buffer);  // Print the received string for debugging
+    //         if (updateParameters(buffer) == 0) {
+    //             PRINTF("Parameters received and set.\n");
+    //             paramsReceived = 1;
+
+    //         } else {
+    //             PRINTF("Error receiving parameters. Please resend.\n");
+    //         }
+    //         index = 0;
+    //         buffer[0] = '\0';
+    //     }
+    // }
+
+
+    // // Initialize the DAC and timer
+    // if (initialize_dac_hot_plate() != 0) {
+    // PRINTF("Failed to initialize microhotplate DAC and hot plate\n");
+    // // Handle error
+    // }
+
+    // // Initialize the MUX
+    // if (initialize_mux() != 0) {
+    // PRINTF("Failed to initialize MUX\n");
+    // // Handle error
+    // }
+
+    // // Initialize the ADC and timer
+    // if (initialize_voltage_adc() != 0) {
+    // PRINTF("Failed to initialize ADC and timer\n");
+    // // Handle error
+    // }
+
+    // // Initialize the ADC and timer
+    // if (initialize_current_adc() != 0) {
+    // PRINTF("Failed to initialize ADC and timer\n");
+    // // Handle error
+    // }
+
+    // // Initialize the excitation DAC
+    // if (initialize_excitation_dac() != 0) {
+    // PRINTF("Failed to initialize excitation DAC\n");
+    // // Handle error
+    // }
+
+    // Configure Systick for 1ms for the timestamps
+    // SysTick_Config(SystemCoreClock / 1000U);
+
+    while (1) {
+
         ch = GETCHAR();  // Wait and read a character from UART
         buffer[index++] = ch;  // Store the received character in the buffer
         if (ch == '\n' || ch == '\r') {
             buffer[index] = '\0';  // Null-terminate the string
             PRINTF("Received string: %s\n", buffer);  // Print the received string for debugging
+            // Update parameters and initialize all peripherals
             if (updateParameters(buffer) == 0) {
+                if (InitializeAllPeripherals() != 0) {
+                    PRINTF("Failed to initialize all peripherals\n");
+                    return -1;
+                }
                 PRINTF("Parameters received and set.\n");
-                paramsReceived = 1;
+
             } else {
                 PRINTF("Error receiving parameters. Please resend.\n");
             }
             index = 0;
             buffer[0] = '\0';
-        }
     }
 
 
-    // Initialize the DAC and timer
-    if (initialize_dac_hot_plate() != 0) {
-    PRINTF("Failed to initialize microhotplate DAC and hot plate\n");
-    // Handle error
-    }
-
-    // Initialize the ADC and timer
-    if (initialize_voltage_adc() != 0) {
-    PRINTF("Failed to initialize ADC and timer\n");
-    // Handle error
-    }
-
-    // Initialize the ADC and timer
-    if (initialize_current_adc() != 0) {
-    PRINTF("Failed to initialize ADC and timer\n");
-    // Handle error
-    }
-
-    // Initialize the excitation DAC
-    if (initialize_excitation_dac() != 0) {
-    PRINTF("Failed to initialize excitation DAC\n");
-    // Handle error
-    }
-    // Configure Systick for 1ms for the timestamps
-    SysTick_Config(SystemCoreClock / 1000U);
-
-    while (1) {
 
         // Check if the array is filled and if so calculate the resistance array
-        if (V_sens_strip_values_ready && I_sens_strip_values_ready) {
-            // Calculate the resistance array
-            calculate_resistance_array();
-            // Print the resistance array
-            for (int i = 0; i < 8; i++) {
-                PRINTF("Resistance of strip %d: %d, Time: %d\n", i + 1, resistance_array[i][0], resistance_array[i][1]);
-            }
-            // Reset the flags
-            V_sens_strip_values_ready = false;
-            I_sens_strip_values_ready = false;
-        }
+        // if (V_sens_strip_values_ready && I_sens_strip_values_ready) {
+        //     // Calculate the resistance array
+        //     calculate_resistance_array();
+        //     // Print the resistance array
+        //     for (int i = 0; i < 8; i++) {
+        //         PRINTF("Resistance of strip %d: %d, Time: %d\n", i + 1, resistance_array[i][0], resistance_array[i][1]);
+        //     }
+        //     // Reset the flags
+        //     V_sens_strip_values_ready = false;
+        //     I_sens_strip_values_ready = false;
+        // }
+
+        // // Check if voltage array is ready and then prnt it
+        // if (V_sens_strip_values_ready) {
+        //     for (int i = 0; i < 8; i++) {
+        //         PRINTF("Voltage of strip %d: %d, Time: %d\n", i + 1, V_sens_strip_values[i][0], V_sens_strip_values[i][1]);
+        //     }
+        //     PRINTF("Current of strip %d:\n", current_adc_result);
+        //     V_sens_strip_values_ready = false;
+        // }
+
+        // // Check if current array is ready and then print it
+        // if (I_sens_strip_values_ready) {
+        //     for (int i = 0; i < 8; i++) {
+        //         PRINTF("Current of strip %d: %d, Time: %d\n", i + 1, I_sens_strip_values[i][0], I_sens_strip_values[i][1]);
+        //     }
+        //     I_sens_strip_values_ready = false;
+        // }
     }
 }   
 
