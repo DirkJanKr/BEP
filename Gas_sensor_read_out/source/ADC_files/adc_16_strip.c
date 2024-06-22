@@ -401,7 +401,7 @@ void CTIMER2_IRQHandler(void) {
     // Trigger ADC conversion
 
     if (g_strip_count == 0) {
-        PRINTF("No active strips\n");
+        // PRINTF("No active strips\n");
         return;
     }
 
@@ -438,9 +438,12 @@ void CTIMER2_IRQHandler(void) {
             // current_active_strip_index = 0; // Reset the strip index
             // Calculate the resistance array
             calculate_resistance_array();
-            // Print the resistance array
-            for (int i = 0; i < 8; i++) {
-                PRINTF("Resistance of strip %d: %d, Time: %d\n", i + 1, resistance_array[i][0], resistance_array[i][1]);
+
+            // Print the resistance array only if GUI is used
+            if (ModbusFlag){
+                for (int i = 0; i < 8; i++) {
+                    PRINTF("Resistance of strip %d: %d, Time: %d\n", i + 1, resistance_array[i][0], resistance_array[i][1]);
+                }
             }
         }
     }

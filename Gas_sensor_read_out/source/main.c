@@ -9,6 +9,7 @@
 #include "source/ADC_files/adc_16_strip.h"
 #include "source/MUX_files/gpio_for_mux.h"
 #include "source/DAC_files/DAC_excitation_voltage.h"
+#include "source/Modbus_files/modbus.h"
 
 // prototypes
 int initialize_dac_hot_plate(void);
@@ -16,6 +17,7 @@ int initialize_mux(void);
 int initialize_voltage_adc(void);
 int initialize_current_adc(void);
 int initialize_excitation_dac(void);
+int initialize_Modbus(void);
 int TimestampInit(void);
 
 
@@ -175,7 +177,6 @@ int InitializeAllPeripherals(){
 }
 
 
-
 int initialize_dac_hot_plate(void) {
     // Initialize the DAC
     Dac_and_other_setup();
@@ -265,6 +266,23 @@ int TimestampInit(void) {
     return 0; // Success
 }
 
+int initialize_Modbus(void) {
+    // Initialize the MUX
+    Modbus_init_UARTs();
+    // holdingRegisters[7] = {0, 50, 50, 21000, 1000, 8, 8};
+    // uint32_t waveType = 0;  // 0: sine, 1: square, 2: triangle (or sawtooth depending on the duty cycle)
+    // uint32_t dutyCycle = 50;    // in percentage
+    // float desiredFrequency = 0.05;  // in Hz
+    // uint32_t desiredAmplitude = 21;  // in volts
+    // float g_excitation_voltage_per_resistor = 1.0; // in volts;
+    // uint16_t MUX_freq = 8;
+    // bool active_strips[8] = {false, false, false, false, false, false, false, false};
+
+    // InitializeAllPeripherals();
+
+    return 0; // Success
+}
+
 int main(void) {
     char buffer[256] = {0};
     int index = 0;
@@ -331,8 +349,21 @@ int main(void) {
     // Configure Systick for 1ms for the timestamps
     // SysTick_Config(SystemCoreClock / 1000U);
 
-    while (1) {
-
+    
+    if (ModbusFlag){
+        initialize_Modbus();
+        while(1){
+            HandleModbusFrame(MODBUS_LPUART);
+            PRINTF("--------------CHECK 3-------------\n");
+            if(ModbusParamChanged){
+                PRINTF("Parameters updated\n");
+                InitializeAllPeripherals();
+                ModbusParamChanged = false;
+            }
+        }
+    }
+    else{
+        while(1){
         ch = GETCHAR();  // Wait and read a character from UART
         buffer[index++] = ch;  // Store the received character in the buffer
         if (ch == '\n' || ch == '\r') {
@@ -351,6 +382,7 @@ int main(void) {
             }
             index = 0;
             buffer[0] = '\0';
+        }
     }
 
 

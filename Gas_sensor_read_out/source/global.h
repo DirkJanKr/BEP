@@ -68,6 +68,11 @@ extern bool active_strips[8];
 // Value to store the result of the curr strip
 extern uint32_t current_adc_result;
 
+extern bool ModbusParamChanged;
+
+extern bool ModbusFlag;
+
+
 // Function prototypes
 
 #endif // GLOBAL_H
