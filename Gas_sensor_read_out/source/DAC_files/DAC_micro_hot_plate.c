@@ -114,7 +114,7 @@ void SetupTimer() {
 
     // Use NVIC to enable the interrupt and set the priority
     EnableIRQ(CTIMER4_IRQn);
-    NVIC_SetPriority(CTIMER4_IRQn, 2);
+    NVIC_SetPriority(CTIMER4_IRQn, 4);
 
     // Register the callback function to be called when the match value is reached
     CTIMER_RegisterCallBack(CTIMER4, (ctimer_callback_t[]){(ctimer_callback_t)dac_update_callback}, kCTIMER_SingleCallback);

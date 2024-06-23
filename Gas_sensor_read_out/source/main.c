@@ -106,7 +106,8 @@ int updateParameters(char* input) {
         return -1;
     }
 
-    // Caluclate the number of strip based on the active_strips array and store it in g_strip_count
+    // Caluclate the number of strip based on the active_strips array and store it in g_strip_count but first set it to 0
+    g_strip_count = 0;
     for (int i = 0; i < MAX_STRIP_COUNT; i++) {
         if (active_strips[i]) {
             g_strip_count++;
@@ -116,22 +117,6 @@ int updateParameters(char* input) {
     return 0; // Success
 }
 
-// void calculate_resistance_array(void) {
-//     // Calculate the resistance array, loop through the active strips array and calculate the resistance of active strips
-//     // Leave the false entries at 0. Also add the timestamp from the V_sens_strip_values array
-//     for (int i = 0; i < MAX_STRIP_COUNT; i++) {
-//         if (active_strips[i]) {
-//             // Fill in the timestamp in the resistance array
-//             resistance_array[i][1] = V_sens_strip_values[i][1];
-            
-//             // Calculate the resistance and round to the nearest integer
-//             // 0.5 is added to account for truncation when casting to int
-
-//             resistance_array[i][0] = (int)(((float)V_sens_strip_values[i][0] / (float)current_adc_result) * 120 * 75 + 0.5);
-//         }
-//     }
-// }
-
 int InitializeAllPeripherals(){
     // Initialize Hot plate dac 
     if (initialize_dac_hot_plate() != 0) {
@@ -139,11 +124,11 @@ int InitializeAllPeripherals(){
         return -1;
     }
 
-    // // Initialize the MUX
-    // if (initialize_mux() != 0) {
-    //     PRINTF("Failed to initialize MUX\n");
-    //     return -1;
-    // }
+    // Initialize the MUX
+    if (initialize_mux() != 0) {
+        PRINTF("Failed to initialize MUX\n");
+        return -1;
+    }
 
     // Initialize the voltage ADC and timer
     if (initialize_voltage_adc() != 0) {
@@ -310,7 +295,7 @@ int main(void) {
 
 
     // enable interupt and set priority for systick interupt
-    // NVIC_SetPriority(SysTick_IRQn, 1U);
+    NVIC_SetPriority(SysTick_IRQn, 1U);
 
     PRINTF("Waiting for parameters...\n");
 
@@ -345,38 +330,6 @@ int main(void) {
             index = 0;
             buffer[0] = '\0';
     }
-
-
-
-        // Check if the array is filled and if so calculate the resistance array
-        // if (V_sens_strip_values_ready && I_sens_strip_values_ready) {
-        //     // Calculate the resistance array
-        //     calculate_resistance_array();
-        //     // Print the resistance array
-        //     for (int i = 0; i < 8; i++) {
-        //         PRINTF("Resistance of strip %d: %d, Time: %d\n", i + 1, resistance_array[i][0], resistance_array[i][1]);
-        //     }
-        //     // Reset the flags
-        //     V_sens_strip_values_ready = false;
-        //     I_sens_strip_values_ready = false;
-        // }
-
-        // // Check if voltage array is ready and then prnt it
-        // if (V_sens_strip_values_ready) {
-        //     for (int i = 0; i < 8; i++) {
-        //         PRINTF("Voltage of strip %d: %d, Time: %d\n", i + 1, V_sens_strip_values[i][0], V_sens_strip_values[i][1]);
-        //     }
-        //     PRINTF("Current of strip %d:\n", current_adc_result);
-        //     V_sens_strip_values_ready = false;
-        // }
-
-        // // Check if current array is ready and then print it
-        // if (I_sens_strip_values_ready) {
-        //     for (int i = 0; i < 8; i++) {
-        //         PRINTF("Current of strip %d: %d, Time: %d\n", i + 1, I_sens_strip_values[i][0], I_sens_strip_values[i][1]);
-        //     }
-        //     I_sens_strip_values_ready = false;
-        // }
     }
 }   
 

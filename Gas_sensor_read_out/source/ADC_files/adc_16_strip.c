@@ -44,7 +44,7 @@
 #define Current_VREF_BASE VREF0
 
 #define HardwareAveraging kLPADC_ConversionAverage1024
-#define CycleSampleTime kLPADC_SampleTimeADCK67
+#define CycleSampleTime kLPADC_SampleTimeADCK131
 
 
 // used when averaging ADC values
@@ -200,7 +200,7 @@ void ADC_Voltage_Initialize(void) {
     LPADC_GetDefaultConfig(&mLpadcConfigStruct);
     mLpadcConfigStruct.enableAnalogPreliminary = true;
     mLpadcConfigStruct.referenceVoltageSource = kLPADC_ReferenceVoltageAlt2;
-    // mLpadcConfigStruct.triggerPriorityPolicy = kLPADC_TriggerPriorityPreemptSubsequently;
+    mLpadcConfigStruct.triggerPriorityPolicy = kLPADC_TriggerPriorityPreemptSubsequently;
 
     mLpadcConfigStruct.conversionAverageMode = HardwareAveraging;
 
@@ -230,7 +230,7 @@ void ADC_Voltage_Initialize(void) {
 
     LPADC_SetConvTriggerConfig(Voltage_LPADC_BASE, 0U, &mLpadcTriggerConfigStruct);
     LPADC_EnableInterrupts(Voltage_LPADC_BASE, kLPADC_FIFO0WatermarkInterruptEnable);
-    EnableIRQWithPriority(Voltage_LPADC_IRQn, 1); // Set ADC interrupt priority to 3
+    EnableIRQWithPriority(Voltage_LPADC_IRQn, 3); // Set ADC interrupt priority to 3
 
     PRINTF("ADC Full Range: %d\n", V_sens_LpadcFullRange);
 }
@@ -269,7 +269,7 @@ void ADC_Current_Initialize(void) {
     LPADC_GetDefaultConfig(&mLpadcConfigStruct);
     mLpadcConfigStruct.enableAnalogPreliminary = true;
     mLpadcConfigStruct.referenceVoltageSource = kLPADC_ReferenceVoltageAlt2;
-    // mLpadcConfigStruct.triggerPriorityPolicy = kLPADC_TriggerPriorityPreemptSubsequently;
+    mLpadcConfigStruct.triggerPriorityPolicy = kLPADC_TriggerPriorityPreemptSubsequently;
 
 
     mLpadcConfigStruct.conversionAverageMode = HardwareAveraging;
@@ -317,7 +317,7 @@ void ADC_Voltage_timer_setup(void) {
     CTIMER_GetDefaultConfig(&config);
     CTIMER_Init(CTIMER2, &config);
 
-    uint32_t matchValue = 48000000 / MUX_freq / SoftwareAverageCount; // 48MHz is the frequency of the FRO clock
+    uint32_t matchValue = 48000000 / (MUX_freq * SoftwareAverageCount); // 48MHz is the frequency of the FRO clock
 
     ctimer_match_config_t matchConfig = {
         .enableCounterReset = true,
@@ -331,6 +331,7 @@ void ADC_Voltage_timer_setup(void) {
     // Use NVIC to enable the interrupt and set the priority
     EnableIRQ(CTIMER2_IRQn);
     NVIC_SetPriority(CTIMER2_IRQn, 2);
+
 
     CTIMER_SetupMatch(CTIMER2, kCTIMER_Match_0, &matchConfig);
     CTIMER_StartTimer(CTIMER2);
@@ -411,13 +412,16 @@ void CTIMER2_IRQHandler(void) {
         return;
     }
 
-    if (currentCountIndex < SoftwareAverageCount) {
+    if (currentCountIndex < (SoftwareAverageCount - 1)) {
         LPADC_DoSoftwareTrigger(Voltage_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
         for (volatile int i = 0; i < 150; i++); // Small delay
         LPADC_DoSoftwareTrigger(Current_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
         currentCountIndex++;
 
     } else {
+        LPADC_DoSoftwareTrigger(Voltage_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
+        for (volatile int i = 0; i < 150; i++); // Small delay
+        LPADC_DoSoftwareTrigger(Current_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
         // calculate the average of the ADC values
         current_adc_result = CurrentSum / SoftwareAverageCount;
         resultVoltage = VoltageSum / SoftwareAverageCount;
@@ -449,8 +453,17 @@ void CTIMER2_IRQHandler(void) {
             for (int i = 0; i < 8; i++) {
                 PRINTF("Resistance of strip %d: %d, Time: %d\n", i + 1, resistance_array[i][0], resistance_array[i][1]);
             }
+            // PRINTF("Resistance of strip %d: %d, Time: %d\n", 1, resistance_array[0][0], resistance_array[0][1]);
+
+            // // print the voltage array for debugging
+            // for (int i = 0; i < 8; i++) {
+            //     PRINTF("Voltage of strip %d: %d, Time: %d\n", i + 1, V_sens_strip_values[i][0], V_sens_strip_values[i][1]);
+            // }
+
             // current_adc_result = 0;
         }
+        SelectMuxChannel(active_strip_indices[current_active_strip_index]);
+
     }
     // LPADC_DoSoftwareTrigger(Current_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
     // LPADC_DoSoftwareTrigger(Voltage_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
