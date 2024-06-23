@@ -48,7 +48,7 @@ void SetExcitationVoltage(void)
         return;
     }
 
-    float total_voltage = g_excitation_voltage_per_resistor * g_resistor_formation;
+    float total_voltage = g_excitation_voltage_per_resistor * g_strip_count;
     if (total_voltage > 8.0)
     {
         PRINTF("Error: Total excitation voltage must not exceed 8.0V.\n");

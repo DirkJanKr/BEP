@@ -61,10 +61,15 @@ add_executable(${MCUX_SDK_PROJECT_NAME}
 "${ProjDirPath}/../source/drivers/fsl_vref.h"
 "${ProjDirPath}/../source/drivers/fsl_dac.c"
 "${ProjDirPath}/../source/drivers/fsl_dac.h"
+"${ProjDirPath}/../source/drivers/fsl_dac14.c"
+"${ProjDirPath}/../source/drivers/fsl_dac14.h"
 "${ProjDirPath}/../source/MUX_files/gpio_for_mux.c"
 "${ProjDirPath}/../source/MUX_files/gpio_for_mux.h"
 "${ProjDirPath}/../source/DAC_files/DAC_excitation_voltage.c"
 "${ProjDirPath}/../source/DAC_files/DAC_excitation_voltage.h"
+"${ProjDirPath}/../source/Modbus_files/modbus.c"
+"${ProjDirPath}/../source/Modbus_files/modbus.h"
+
 
 
 "${ProjDirPath}/../source/main.c"

@@ -44,7 +44,7 @@
 #define Current_VREF_BASE VREF0
 
 #define HardwareAveraging kLPADC_ConversionAverage1024
-#define CycleSampleTime kLPADC_SampleTimeADCK67
+#define CycleSampleTime kLPADC_SampleTimeADCK131
 
 
 // used when averaging ADC values
@@ -200,7 +200,7 @@ void ADC_Voltage_Initialize(void) {
     LPADC_GetDefaultConfig(&mLpadcConfigStruct);
     mLpadcConfigStruct.enableAnalogPreliminary = true;
     mLpadcConfigStruct.referenceVoltageSource = kLPADC_ReferenceVoltageAlt2;
-    // mLpadcConfigStruct.triggerPriorityPolicy = kLPADC_TriggerPriorityPreemptSubsequently;
+    mLpadcConfigStruct.triggerPriorityPolicy = kLPADC_TriggerPriorityPreemptSubsequently;
 
     mLpadcConfigStruct.conversionAverageMode = HardwareAveraging;
 
@@ -230,7 +230,7 @@ void ADC_Voltage_Initialize(void) {
 
     LPADC_SetConvTriggerConfig(Voltage_LPADC_BASE, 0U, &mLpadcTriggerConfigStruct);
     LPADC_EnableInterrupts(Voltage_LPADC_BASE, kLPADC_FIFO0WatermarkInterruptEnable);
-    EnableIRQWithPriority(Voltage_LPADC_IRQn, 1); // Set ADC interrupt priority to 3
+    EnableIRQWithPriority(Voltage_LPADC_IRQn, 3); // Set ADC interrupt priority to 3
 
     PRINTF("ADC Full Range: %d\n", V_sens_LpadcFullRange);
 }
@@ -269,7 +269,7 @@ void ADC_Current_Initialize(void) {
     LPADC_GetDefaultConfig(&mLpadcConfigStruct);
     mLpadcConfigStruct.enableAnalogPreliminary = true;
     mLpadcConfigStruct.referenceVoltageSource = kLPADC_ReferenceVoltageAlt2;
-    // mLpadcConfigStruct.triggerPriorityPolicy = kLPADC_TriggerPriorityPreemptSubsequently;
+    mLpadcConfigStruct.triggerPriorityPolicy = kLPADC_TriggerPriorityPreemptSubsequently;
 
 
     mLpadcConfigStruct.conversionAverageMode = HardwareAveraging;
@@ -306,6 +306,10 @@ void ADC_Current_Initialize(void) {
  * This function configures the timer to generate interrupts at the desired frequency.
  */
 void ADC_Voltage_timer_setup(void) {
+
+    // Stop the timer if it is already running
+    CTIMER_StopTimer(CTIMER2);
+
     CLOCK_SetClkDiv(kCLOCK_DivCtimer2Clk, 1u);
     CLOCK_AttachClk(kFRO_HF_to_CTIMER2); // Attach FRO 48MHz to CTIMER2.
 
@@ -313,7 +317,7 @@ void ADC_Voltage_timer_setup(void) {
     CTIMER_GetDefaultConfig(&config);
     CTIMER_Init(CTIMER2, &config);
 
-    uint32_t matchValue = 48000000 / MUX_freq / SoftwareAverageCount; // 48MHz is the frequency of the FRO clock
+    uint32_t matchValue = 48000000 / (MUX_freq * SoftwareAverageCount); // 48MHz is the frequency of the FRO clock
 
     ctimer_match_config_t matchConfig = {
         .enableCounterReset = true,
@@ -327,6 +331,7 @@ void ADC_Voltage_timer_setup(void) {
     // Use NVIC to enable the interrupt and set the priority
     EnableIRQ(CTIMER2_IRQn);
     NVIC_SetPriority(CTIMER2_IRQn, 2);
+
 
     CTIMER_SetupMatch(CTIMER2, kCTIMER_Match_0, &matchConfig);
     CTIMER_StartTimer(CTIMER2);
@@ -400,49 +405,65 @@ void CTIMER2_IRQHandler(void) {
     CTIMER_ClearStatusFlags(CTIMER2, kCTIMER_Match0Flag);
     // Trigger ADC conversion
 
-    if (g_strip_count == 0) {
+
+
+    if (g_strip_count == 0 && !ModbusFlag) {
         PRINTF("No active strips\n");
         return;
     }
 
-    if (currentCountIndex < SoftwareAverageCount) {
+    if (currentCountIndex < (SoftwareAverageCount - 1)) {
         LPADC_DoSoftwareTrigger(Voltage_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
         for (volatile int i = 0; i < 150; i++); // Small delay
         LPADC_DoSoftwareTrigger(Current_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
-        
-
         currentCountIndex++;
+
     } else {
-        current_active_strip_index = (current_active_strip_index + 1) % g_strip_count;
-        // PRINTF("Current active strip index: %d\n", current_active_strip_index);
-        // Print the active strip indices array for debugging
-        for (uint8_t i = 0; i < g_strip_count; i++) {
-            // PRINTF("Active strip indices: %d\n", active_strip_indices[i]);
-        }
+        LPADC_DoSoftwareTrigger(Voltage_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
+        for (volatile int i = 0; i < 150; i++); // Small delay
+        LPADC_DoSoftwareTrigger(Current_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
+        // calculate the average of the ADC values
+        current_adc_result = CurrentSum / SoftwareAverageCount;
+        resultVoltage = VoltageSum / SoftwareAverageCount;
 
         // PRINTF("Active channel: %d\n", active_strip_indices[current_active_strip_index]);
         uint8_t currentChannel = active_strip_indices[current_active_strip_index];
-        SelectMuxChannel(currentChannel);
+        // PRINTF("currentChannel: %d\n", currentChannel);
+        // PRINTF("g_tiemstamp_ms: %d\n", g_timestamp_ms);
+        // print the current channel and the timestamp
+        // PRINTF("Current channel: %d, Time: %d\n", currentChannel, g_timestamp_ms);
 
-        current_adc_result = CurrentSum / SoftwareAverageCount;
-        resultVoltage = VoltageSum / SoftwareAverageCount;
-        // PRINTF("Current ADC value: %d\n", current_adc_result);
-        // PRINTF("Voltage ADC value: %d\n", resultVoltage);
         V_sens_strip_values[currentChannel][0] = resultVoltage;
         V_sens_strip_values[currentChannel][1] = g_timestamp_ms; 
+
         CurrentSum = 0;
         VoltageSum = 0;
         currentCountIndex = 0;
 
+        current_active_strip_index = (current_active_strip_index + 1) % g_strip_count;
+
+        // SelectMuxChannel(active_strip_indices[current_active_strip_index]);
+
         if (current_active_strip_index == 0) {
-            // current_active_strip_index = 0; // Reset the strip index
+            // current_adc_result = current_adc_result / g_strip_count;
             // Calculate the resistance array
             calculate_resistance_array();
+            // PRINTF("current_adc_result: %d\n", current_adc_result);
             // Print the resistance array
             for (int i = 0; i < 8; i++) {
                 PRINTF("Resistance of strip %d: %d, Time: %d\n", i + 1, resistance_array[i][0], resistance_array[i][1]);
             }
+            // PRINTF("Resistance of strip %d: %d, Time: %d\n", 1, resistance_array[0][0], resistance_array[0][1]);
+
+            // // print the voltage array for debugging
+            // for (int i = 0; i < 8; i++) {
+            //     PRINTF("Voltage of strip %d: %d, Time: %d\n", i + 1, V_sens_strip_values[i][0], V_sens_strip_values[i][1]);
+            // }
+
+            // current_adc_result = 0;
         }
+        SelectMuxChannel(active_strip_indices[current_active_strip_index]);
+
     }
     // LPADC_DoSoftwareTrigger(Current_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
     // LPADC_DoSoftwareTrigger(Voltage_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
