@@ -234,7 +234,18 @@ void BOARD_InitPins(void)
                                                     kPORT_UnlockRegister};
     /* PORT4_2 (pin T1) is configured as DAC0_OUT */
     PORT_SetPinConfig(PORT4, 2U, &port4_2_pinT1_config);
+
+    /* Modbus UART pins */
+
+    /* PORT4_0 (pin P1) is configured as FC2_P0 --> RX */
+    PORT_SetPinMux(PORT4, 0U, kPORT_MuxAlt2);
+    PORT4->PCR[0] = ((PORT4->PCR[0] & (~(PORT_PCR_IBE_MASK))) | PORT_PCR_IBE(PCR_IBE_ibe1));
+
+    /* PORT4_1 (pin P2) is configured as FC2_P1 --> TX */
+    PORT_SetPinMux(PORT4, 1U, kPORT_MuxAlt2);
+    PORT4->PCR[1] = ((PORT4->PCR[1] & (~(PORT_PCR_IBE_MASK))) | PORT_PCR_IBE(PCR_IBE_ibe1));
 }
+
 /*****************************************
  * EOF
  ****************************************/

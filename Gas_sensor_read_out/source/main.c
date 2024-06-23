@@ -13,7 +13,7 @@
 #include "source/drivers/fsl_lpadc.h"
 #include "source/drivers/fsl_dac.h"
 #include "source/drivers/fsl_dac14.h"
-
+#include "source/Modbus_files/modbus.h"
 
 // prototypes
 int initialize_dac_hot_plate(void);
@@ -21,6 +21,7 @@ int initialize_mux(void);
 int initialize_voltage_adc(void);
 int initialize_current_adc(void);
 int initialize_excitation_dac(void);
+int initialize_Modbus(void);
 int TimestampInit(void);
 
 
@@ -154,6 +155,7 @@ int InitializeAllPeripherals(){
         return -1;
     }
 
+
     // Initialze resistance array to 0
     for (int i = 0; i < 8; i++) {
         resistance_array[i][0] = 0;
@@ -255,6 +257,23 @@ int TimestampInit(void) {
     return 0; // Success
 }
 
+int initialize_Modbus(void) {
+    // Initialize the MUX
+    Modbus_init_UARTs();
+    // holdingRegisters[7] = {0, 50, 50, 21000, 1000, 8, 8};
+    // uint32_t waveType = 0;  // 0: sine, 1: square, 2: triangle (or sawtooth depending on the duty cycle)
+    // uint32_t dutyCycle = 50;    // in percentage
+    // float desiredFrequency = 0.05;  // in Hz
+    // uint32_t desiredAmplitude = 21;  // in volts
+    // float g_excitation_voltage_per_resistor = 1.0; // in volts;
+    // uint16_t MUX_freq = 8;
+    // bool active_strips[8] = {false, false, false, false, false, false, false, false};
+
+    // InitializeAllPeripherals();
+
+    return 0; // Success
+}
+
 int ResetAllPeripherals() {
     // Deinitialize timer for the micro hotplate DAC
     CTIMER_Deinit(CTIMER4);
@@ -293,45 +312,78 @@ int main(void) {
     BOARD_InitBootClocks();
     BOARD_InitDebugConsole();
 
-
     // enable interupt and set priority for systick interupt
     NVIC_SetPriority(SysTick_IRQn, 1U);
 
     PRINTF("Waiting for parameters...\n");
 
-    while (1) {
-
-        ch = GETCHAR();  // Wait and read a character from UART
-        buffer[index++] = ch;  // Store the received character in the buffer
-        if (ch == '\n' || ch == '\r') {
-            buffer[index] = '\0';  // Null-terminate the string
-            PRINTF("Received string: %s\n", buffer);  // Print the received string for debugging
-
-            // reset active strips
-            for (int i = 0; i < 8; i++) {
-                active_strips[i] = false;
+    if (ModbusFlag){
+        initialize_Modbus();
+        while(1){
+            HandleModbusFrame(MODBUS_LPUART);
+            PRINTF("--------------CHECK 3-------------\n");
+            if(ModbusParamChanged){
+                PRINTF("Parameters updated\n");
+                InitializeAllPeripherals();
+                ModbusParamChanged = false;
             }
-            if (Initializationsuccess == true) {
-                ResetAllPeripherals();
-                PRINTF("Reset all peripherals\n");
-            }
-            // Update parameters and initialize all peripherals
-            if (updateParameters(buffer) == 0) {
-                if (InitializeAllPeripherals() != 0) {
-                    PRINTF("Failed to initialize all peripherals\n");
-                    Initializationsuccess = true;
-                    return -1;
-                }
-                PRINTF("Parameters received and set.\n");
-
-            } else {
-                PRINTF("Error receiving parameters. Please resend.\n");
-            }
-            index = 0;
-            buffer[0] = '\0';
+        }
     }
+    else{
+        while(1){
+            ch = GETCHAR();  // Wait and read a character from UART
+            buffer[index++] = ch;  // Store the received character in the buffer
+            if (ch == '\n' || ch == '\r') {
+                buffer[index] = '\0';  // Null-terminate the string
+                PRINTF("Received string: %s\n", buffer);  // Print the received string for debugging
+
+                // reset active strips
+                for (int i = 0; i < 8; i++) {
+                    active_strips[i] = false;
+                }
+                if (Initializationsuccess == true) {
+                    ResetAllPeripherals();
+                    PRINTF("Reset all peripherals\n");
+                }
+                // Update parameters and initialize all peripherals
+                if (updateParameters(buffer) == 0) {
+                    if (InitializeAllPeripherals() != 0) {
+                        PRINTF("Failed to initialize all peripherals\n");
+                        Initializationsuccess = true;
+                        return -1;
+                    }
+                    PRINTF("Parameters received and set.\n");
+
+                } 
+                else {
+                    PRINTF("Error receiving parameters. Please resend.\n");
+                }
+                index = 0;
+                buffer[0] = '\0';
+            }
+        }
     }
 }   
+
+// ch = GETCHAR();  // Wait and read a character from UART
+//         buffer[index++] = ch;  // Store the received character in the buffer
+//         if (ch == '\n' || ch == '\r') {
+//             buffer[index] = '\0';  // Null-terminate the string
+//             PRINTF("Received string: %s\n", buffer);  // Print the received string for debugging
+//             // Update parameters and initialize all peripherals
+//             if (updateParameters(buffer) == 0) {
+//                 if (InitializeAllPeripherals() != 0) {
+//                     PRINTF("Failed to initialize all peripherals\n");
+//                     return -1;
+//                 }
+//                 PRINTF("Parameters received and set.\n");
+
+//             } else {
+//                 PRINTF("Error receiving parameters. Please resend.\n");
+//             }
+//             index = 0;
+//             buffer[0] = '\0';
+//             }
 
 
 /*Priority list:

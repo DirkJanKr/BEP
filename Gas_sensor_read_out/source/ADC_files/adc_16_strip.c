@@ -407,7 +407,7 @@ void CTIMER2_IRQHandler(void) {
 
 
 
-    if (g_strip_count == 0) {
+    if (g_strip_count == 0 && !ModbusFlag) {
         PRINTF("No active strips\n");
         return;
     }
