@@ -53,7 +53,7 @@ uint32_t current_adc_result = 0;
 bool ModbusParamChanged = false;
 
 // flag set to true if modbus is used instead of the GUI
-bool ModbusFlag = true;
+bool ModbusFlag = false;
 
 
 
