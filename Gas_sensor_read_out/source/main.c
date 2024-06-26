@@ -14,8 +14,10 @@
 #include "source/drivers/fsl_dac.h"
 #include "source/drivers/fsl_dac14.h"
 #include "source/Modbus_files/modbus.h"
+#include "source/PowerMUX_files/powermux.h"
 
 // prototypes
+int initialize_powermux(void);
 int initialize_dac_hot_plate(void);
 int initialize_mux(void);
 int initialize_voltage_adc(void);
@@ -119,6 +121,13 @@ int updateParameters(char* input) {
 }
 
 int InitializeAllPeripherals(){
+
+    // Initialize the power mux
+    if (initialize_powermux() != 0) {
+        PRINTF("Failed to initialize power mux\n");
+        return -1;
+    }
+
     // Initialize Hot plate dac 
     if (initialize_dac_hot_plate() != 0) {
         PRINTF("Failed to initialize microhotplate DAC and hot plate\n");
@@ -166,6 +175,12 @@ int InitializeAllPeripherals(){
     
 }
 
+int initialize_powermux(void) {
+    // Initialize the power mux
+    InitPowerMux();
+
+    return 0; // Success
+}
 
 
 int initialize_dac_hot_plate(void) {
@@ -307,10 +322,14 @@ int main(void) {
     int index = 0;
     char ch;
     bool Initializationsuccess = false;
+
   
     BOARD_InitPins();
     BOARD_InitBootClocks();
     BOARD_InitDebugConsole();
+
+    // Read the power source and setting the ModbusFlag
+    readPowerSource();
 
     // enable interupt and set priority for systick interupt
     NVIC_SetPriority(SysTick_IRQn, 1U);

@@ -85,9 +85,13 @@ volatile uint16_t I_sens_Count = 0;
 
 static uint8_t SoftwareAverageCount = 30;
 static uint8_t currentCountIndex = 0;
+// Value to store the result of the curr strip
 static uint32_t VoltageSum = 0;
 static uint32_t CurrentSum = 0;
 static uint32_t resultVoltage = 0;
+static uint32_t current_adc_result = 0;
+static uint32_t Total_averaged_current = 0;
+static uint32_t Total_adc_summation = 0;
 
 static uint8_t current_active_strip_index = 0;
 static uint8_t *active_strip_indices = NULL; // Pointer to dynamically allocated array
@@ -106,19 +110,6 @@ void ADC0_IRQHandler(void) {
 
         V_sens_LpadcConversionCompletedFlag = true;
         VoltageSum += (V_sens_LpadcResultConfigStruct.convValue >> V_sens_LpadcResultShift);
-        // V_sens_AdcValue = (V_sens_LpadcResultConfigStruct.convValue >> V_sens_LpadcResultShift);
-        // // Code below is without averaging, just the 1024 hardware averaging
-        // V_sens_strip_values[currentStrip][0] = V_sens_AdcValue; // Save ADC value
-        // V_sens_strip_values[currentStrip][1] = g_timestamp_ms; // Save timestamp
-
-        // // Move to the next strip
-        // currentStrip++;
-        // if (currentStrip >= g_strip_count) {
-
-        //     currentStrip = 0; // Reset the strip index
-        //     V_sens_strip_values_ready = true; // Set the flag indicating the array is filled
-        // }
-        // MUX channel selection here
     }
     SDK_ISR_EXIT_BARRIER;
 }
@@ -131,28 +122,6 @@ void ADC1_IRQHandler(void) {
         I_sens_LpadcConversionCompletedFlag = true;
 
         CurrentSum += (I_sens_LpadcResultConfigStruct.convValue >> I_sens_LpadcResultShift);
-        // I_sens_AdcValue = (I_sens_LpadcResultConfigStruct.convValue >> I_sens_LpadcResultShift);
-
-        // // I_sens_strip_values[current_I_strip][0] = I_sens_AdcValue; // Save ADC value
-        // // I_sens_strip_values[current_I_strip][1] = g_timestamp_ms; // Save timestamp
-
-        // // Add adc value to total sum
-        // I_sens_Sum += I_sens_AdcValue;
-        // I_sens_Count++;
-
-        // // Move to the next strip
-        // current_I_strip++;
-        // if (current_I_strip >= g_strip_count) {
-        //     // Calculate the average of the ADC values
-        //     current_adc_result = I_sens_Sum / I_sens_Count;
-        //     // PRINTF("Current ADC value: %d\n", current_adc_result);
-        //     // Reset the sum and count
-        //     I_sens_Sum = 0;
-        //     I_sens_Count = 0;
-        //     current_I_strip = 0; // Reset the strip index
-        //     I_sens_strip_values_ready = true; // Set the flag indicating the array is filled
-        // }
-        // // MUX channel selection here
     }
     SDK_ISR_EXIT_BARRIER;
 }
@@ -187,10 +156,6 @@ void ADC_Voltage_Initialize(void) {
     CLOCK_SetClkDiv(kCLOCK_DivAdc0Clk, 1U);
     CLOCK_AttachClk(kFRO_HF_to_ADC0);
 
-    uint32_t Frequency = CLOCK_GetAdcClkFreq(0);
-    PRINTF("ADC Frequency: %d\n", Frequency);
-
-
     SPC_EnableActiveModeAnalogModules(Voltage_SPC_BASE, kSPC_controlVref);
 
     VREF_GetDefaultConfig(&vrefConfig);
@@ -203,23 +168,12 @@ void ADC_Voltage_Initialize(void) {
     mLpadcConfigStruct.triggerPriorityPolicy = kLPADC_TriggerPriorityPreemptSubsequently;
 
     mLpadcConfigStruct.conversionAverageMode = HardwareAveraging;
-
-
-
-
-
     LPADC_Init(Voltage_LPADC_BASE, &mLpadcConfigStruct);
     LPADC_DoOffsetCalibration(Voltage_LPADC_BASE);
     LPADC_DoAutoCalibration(Voltage_LPADC_BASE);
 
     LPADC_GetDefaultConvCommandConfig(&mLpadcCommandConfigStruct);
-
-
     mLpadcCommandConfigStruct.sampleTimeMode = CycleSampleTime;
-
-
-
-
     mLpadcCommandConfigStruct.channelNumber = Voltage_LPADC_USER_CHANNEL;
     mLpadcCommandConfigStruct.conversionResolutionMode = kLPADC_ConversionResolutionHigh;
     LPADC_SetConvCommandConfig(Voltage_LPADC_BASE, Voltage_LPADC_USER_CMDID, &mLpadcCommandConfigStruct);
@@ -270,22 +224,14 @@ void ADC_Current_Initialize(void) {
     mLpadcConfigStruct.enableAnalogPreliminary = true;
     mLpadcConfigStruct.referenceVoltageSource = kLPADC_ReferenceVoltageAlt2;
     mLpadcConfigStruct.triggerPriorityPolicy = kLPADC_TriggerPriorityPreemptSubsequently;
-
-
     mLpadcConfigStruct.conversionAverageMode = HardwareAveraging;
-
-
     LPADC_Init(Current_LPADC_BASE, &mLpadcConfigStruct);
 
     LPADC_DoOffsetCalibration(Current_LPADC_BASE);
     LPADC_DoAutoCalibration(Current_LPADC_BASE);
 
     LPADC_GetDefaultConvCommandConfig(&mLpadcCommandConfigStruct);
-
-
     mLpadcCommandConfigStruct.sampleTimeMode = CycleSampleTime;
-
-
     mLpadcCommandConfigStruct.sampleChannelMode = kLPADC_SampleChannelSingleEndSideB;
     mLpadcCommandConfigStruct.channelNumber = Current_LPADC_USER_CHANNEL;
     mLpadcCommandConfigStruct.conversionResolutionMode = kLPADC_ConversionResolutionHigh;
@@ -349,13 +295,21 @@ void calculate_resistance_array(void) {
         if (active_strips[i]) {
             // Fill in the timestamp in the resistance array
             resistance_array[i][1] = V_sens_strip_values[i][1];
-            
+            Total_averaged_current = Total_adc_summation / g_strip_count;
+            // PRINTF("Total adc summation: %d\n", Total_adc_summation);
+            // PRINTF("Total averaged current: %d\n", Total_averaged_current);
+
             // Calculate the resistance and round to the nearest integer
             // 0.5 is added to account for truncation when casting to int
 
-            resistance_array[i][0] = (int)(((float)V_sens_strip_values[i][0] / (float)current_adc_result) * 120 * 75 + 0.5);
+            resistance_array[i][0] = (int)(((float)V_sens_strip_values[i][0] / ((float)Total_averaged_current) * 120 * 75 + 0.5));
+
+   
         }
     }
+    Total_adc_summation = 0;
+    Total_averaged_current = 0;
+
 }
 
 void ConvertActiveStrips() {
@@ -425,6 +379,9 @@ void CTIMER2_IRQHandler(void) {
         // calculate the average of the ADC values
         current_adc_result = CurrentSum / SoftwareAverageCount;
         resultVoltage = VoltageSum / SoftwareAverageCount;
+        Total_adc_summation += current_adc_result;
+
+
 
         // PRINTF("Active channel: %d\n", active_strip_indices[current_active_strip_index]);
         uint8_t currentChannel = active_strip_indices[current_active_strip_index];
@@ -452,19 +409,9 @@ void CTIMER2_IRQHandler(void) {
             // Print the resistance array
             for (int i = 0; i < 8; i++) {
                 PRINTF("Resistance of strip %d: %d, Time: %d\n", i + 1, resistance_array[i][0], resistance_array[i][1]);
-            }
-            // PRINTF("Resistance of strip %d: %d, Time: %d\n", 1, resistance_array[0][0], resistance_array[0][1]);
-
-            // // print the voltage array for debugging
-            // for (int i = 0; i < 8; i++) {
-            //     PRINTF("Voltage of strip %d: %d, Time: %d\n", i + 1, V_sens_strip_values[i][0], V_sens_strip_values[i][1]);
-            // }
-
-            // current_adc_result = 0;
+            };
         }
         SelectMuxChannel(active_strip_indices[current_active_strip_index]);
 
     }
-    // LPADC_DoSoftwareTrigger(Current_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
-    // LPADC_DoSoftwareTrigger(Voltage_LPADC_BASE, 1U); /* 1U is trigger0 mask. */
 }

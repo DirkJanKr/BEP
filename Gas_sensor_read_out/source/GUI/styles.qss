@@ -21,11 +21,11 @@ QFrame {
 
 QLabel {
     font-family: Arial, Helvetica, sans-serif;  /* Ensure compatibility with more systems */
-    font-size: 12pt;
+    font-size: 10pt;
 }
 
 #logoLabel {
-    margin-bottom: 10px;
+    margin-bottom: 5px;
 }
 
 #bottomFrame QLabel {
@@ -34,10 +34,9 @@ QLabel {
 
 QLineEdit {
     font-family: Arial, Helvetica, sans-serif;  /* Ensure compatibility with more systems */
-    font-size: 12pt;
+    font-size: 10pt;
     border: 1px solid grey;
     border-radius: 3px;
-    padding: 3px;
     margin: 5px 0;
 }
 
@@ -47,7 +46,7 @@ QPushButton#startButton {
     color: white;
     text-align: center;
     text-decoration: none;
-    font-size: 12px;
+    font-size: 10px;
     border-radius: 12px;
 }
 
@@ -60,7 +59,7 @@ QPushButton#downloadButton {
     color: white;
     text-align: center;
     text-decoration: none;
-    font-size: 12px;
+    font-size: 10px;
     border-radius: 12px;
 }
 

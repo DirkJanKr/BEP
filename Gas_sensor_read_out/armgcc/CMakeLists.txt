@@ -69,6 +69,8 @@ add_executable(${MCUX_SDK_PROJECT_NAME}
 "${ProjDirPath}/../source/DAC_files/DAC_excitation_voltage.h"
 "${ProjDirPath}/../source/Modbus_files/modbus.c"
 "${ProjDirPath}/../source/Modbus_files/modbus.h"
+"${ProjDirPath}/../source/PowerMUX_files/powermux.c"
+"${ProjDirPath}/../source/PowerMUX_files/powermux.h"
 
 
 

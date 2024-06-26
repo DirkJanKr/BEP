@@ -66,7 +66,7 @@ extern uint8_t g_resistor_formation;
 extern bool active_strips[8];
 
 // Value to store the result of the curr strip
-extern uint32_t current_adc_result;
+// extern uint32_t current_adc_result;
 
 extern bool ModbusParamChanged;
 

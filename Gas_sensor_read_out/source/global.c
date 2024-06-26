@@ -46,14 +46,12 @@ uint8_t g_resistor_formation = 8;
 
 bool active_strips[8] = {false, false, false, false, false, false, false, false};
 
-// Value to store the result of the curr strip
-uint32_t current_adc_result = 0;
 
 // flag to indicate if parameters are changed through modbus
 bool ModbusParamChanged = false;
 
 // flag set to true if modbus is used instead of the GUI
-bool ModbusFlag = true;
+bool ModbusFlag = false;
 
 
 

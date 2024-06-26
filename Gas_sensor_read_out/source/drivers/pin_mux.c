@@ -61,7 +61,14 @@ BOARD_InitPins:
 void BOARD_InitPins(void)
 {
     /* Enables the clock for PORT1: Enables clock */
+
+
+    /* Enables the clock for GPIO2: Enables clock */
+    CLOCK_EnableClock(kCLOCK_Gpio2);
+    /* Enables the clock for PORT1: Enables clock */
     CLOCK_EnableClock(kCLOCK_Port1);
+    /* Enables the clock for PORT2: Enables clock */
+    CLOCK_EnableClock(kCLOCK_Port2);
     /* Enables the clock for PORT3: Enables clock */
     CLOCK_EnableClock(kCLOCK_Port3);
     /* Enables the clock for PORT4: Enables clock */
@@ -167,6 +174,17 @@ void BOARD_InitPins(void)
                       /* Input Buffer Enable: Disables. */
                       | PORT_PCR_IBE(PCR_IBE_ibe0));
 
+    /*Power MUX GPIO Pin*/
+    PORT_SetPinMux(PORT2, 10U, kPORT_MuxAlt0);
+
+    PORT2->PCR[10] = ((PORT2->PCR[10] &
+                      /* Mask bits to zero which are setting */
+                      (~(PORT_PCR_IBE_MASK)))
+
+                    /* Input Buffer Enable: Enables. */
+                    | PORT_PCR_IBE(PCR_IBE_ibe1));
+
+
     /*MUX pins*/
 
     /* PORT4_12 (pin T6) is configured as PIO4_12 */
@@ -211,7 +229,7 @@ void BOARD_InitPins(void)
                       | PORT_PCR_IBE(PCR_IBE_ibe1));
 
 
-    /*DAC for the excitation voltge*/
+    /*DAC for the excitation voltage*/
     const port_pin_config_t port4_2_pinT1_config = {/* Internal pull-up/down resistor is disabled */
                                                     kPORT_PullDisable,
                                                     /* Low internal pull resistor value is selected. */

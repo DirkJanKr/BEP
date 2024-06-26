@@ -1,14 +1,16 @@
 import threading
 import serial
-import time
+import datetime
 import pandas as pd
 import csv
 import re
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QLineEdit, QComboBox, QFormLayout, QPushButton, QGridLayout, QTextEdit, QMessageBox, QSizePolicy, QCheckBox
+import time
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame, QLineEdit, QComboBox, QFormLayout, QPushButton, QGridLayout, QTextEdit, QMessageBox, QSizePolicy, QCheckBox, QFileDialog, QDialog, QDialogButtonBox
 from PySide6.QtCore import Qt, Signal, Slot, QObject, QTimer
 from PySide6.QtGui import QPixmap
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
 
 class SerialThread(QObject):
     new_data = Signal(str)  # Signal to send new data to the GUI
@@ -145,16 +147,48 @@ class MainWindow(QMainWindow):
         except FileNotFoundError:
             with open(self.csv_file_path, 'w', newline='') as csvfile:
                 csv_writer = csv.writer(csvfile)
-                csv_writer.writerow(['Strip', 'Time (s)', 'Resistance (Ohms)'])
+                current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                csv_writer.writerow(['Strip', 'Time (s)', 'Resistance (Ohms)', f'Date and time measurement started: {current_time}'])
         self.csv_file = open(self.csv_file_path, mode='a', newline='')
         self.csv_writer = csv.writer(self.csv_file)
 
     def clear_csv_file(self):
+        current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open(self.csv_file_path, 'w', newline='') as csvfile:
             csv_writer = csv.writer(csvfile)
-            csv_writer.writerow(['Strip', 'Time (s)', 'Resistance (Ohms)'])
+            csv_writer.writerow(['Strip', 'Time (s)', 'Resistance (Ohms)', f'Date and time measurement started: {current_time}'])
         self.csv_file = open(self.csv_file_path, mode='a', newline='')
         self.csv_writer = csv.writer(self.csv_file)
+
+
+# def clear_csv_file(self):
+#     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+#     header_row = ['Strip', 'Time (s)', 'Resistance (Ohms)', current_time]
+
+#     # Write the header row to the CSV file
+#     with open(self.csv_file_path, 'w', newline='') as csv_file:
+#         csv_writer = csv.writer(csv_file)
+#         csv_writer.writerow(header_row)
+
+
+    def download_csv_file(self):
+        file_dialog = QFileDialog()
+        file_dialog.setAcceptMode(QFileDialog.AcceptSave)
+        file_dialog.setNameFilter("CSV Files (*.csv)")
+        file_dialog.setDefaultSuffix("csv")
+
+        if file_dialog.exec():
+            file_path = file_dialog.selectedFiles()[0]
+            try:
+                with open(self.csv_file_path, 'r') as source_file:
+                    with open(file_path, 'w') as dest_file:
+                        dest_file.write(source_file.read())
+                self.show_success_message(f"File saved to {file_path}")
+
+                # QMessageBox.information(self, "Success", f"File saved to {file_path}")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to save file: {e}")
+
 
     def create_top_left_frame(self):
         top_left_frame = QFrame()
@@ -165,7 +199,7 @@ class MainWindow(QMainWindow):
         logo_label = QLabel()
         logo_label.setObjectName("logoLabel")
         pixmap = QPixmap("source/GUI/TUDelft-logo_full-color.png")  # Replace with the actual path to your logo
-        logo_label.setPixmap(pixmap.scaled(300, 150, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        logo_label.setPixmap(pixmap.scaled(250, 125, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         logo_label.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
         logo_label.setStyleSheet("QLabel#logoLabel { border: none; }")  # Remove border from logo label
 
@@ -180,7 +214,7 @@ class MainWindow(QMainWindow):
         connect_button = QPushButton("Connect")
         connect_button.setObjectName("connectButton")  # Set an object name for styling
         connect_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
-        connect_button.setMinimumHeight(25)
+        connect_button.setMinimumHeight(20)
         connect_button.clicked.connect(self.connect_serial_port)  # Connect to the connect_serial_port method
 
         # Layout for serial port input and connect button
@@ -206,7 +240,7 @@ class MainWindow(QMainWindow):
             button = QPushButton(f"Strip {i + 1}")
             button.setCheckable(True)
             button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
-            button.setMinimumHeight(25)
+            button.setMinimumHeight(20)
             button.clicked.connect(lambda _, x=i: self.toggle_strip(x))
             self.strip_buttons.append(button)
             strip_buttons_layout.addWidget(button, i // 4, i % 4)
@@ -220,7 +254,7 @@ class MainWindow(QMainWindow):
 
         # Excitation Voltage per strip
         excitation_voltage_label = QLabel("Excitation Voltage per Strip:")
-        excitation_voltage_label.setObjectName("inputLabel")  # CHANGED: Set a common object name for stylesheet
+        excitation_voltage_label.setObjectName("inputLabel")  #Set a common object name for stylesheet
         self.excitation_voltage_input = QLineEdit()
         self.excitation_voltage_input.setPlaceholderText("Enter Excitation Voltage")
         self.excitation_voltage_input.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
@@ -228,7 +262,7 @@ class MainWindow(QMainWindow):
 
         # MUX Frequency
         mux_freq_label = QLabel("MUX Frequency:")
-        mux_freq_label.setObjectName("inputLabel")  # CHANGED: Set a common object name for stylesheet
+        mux_freq_label.setObjectName("inputLabel")  # Set a common object name for stylesheet
         self.mux_freq_input = QLineEdit()
         self.mux_freq_input.setPlaceholderText("Enter MUX Frequency")
         self.mux_freq_input.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
@@ -236,7 +270,7 @@ class MainWindow(QMainWindow):
 
         # Wave Frequency
         wave_freq_label = QLabel("Wave Frequency:")
-        wave_freq_label.setObjectName("inputLabel")  # CHANGED: Set a common object name for stylesheet
+        wave_freq_label.setObjectName("inputLabel")  # Set a common object name for stylesheet
         self.wave_freq_input = QLineEdit()
         self.wave_freq_input.setPlaceholderText("Enter Wave Frequency")
         self.wave_freq_input.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
@@ -244,7 +278,7 @@ class MainWindow(QMainWindow):
 
         # Wave Type
         wave_type_label = QLabel("Wave Type:")
-        wave_type_label.setObjectName("inputLabel")  # CHANGED: Set a common object name for stylesheet
+        wave_type_label.setObjectName("inputLabel")  # Set a common object name for stylesheet
         self.wave_type_dropdown = QComboBox()
         self.wave_type_dropdown.addItem("Sine wave")  # Add entry to dropdown
         self.wave_type_dropdown.addItem("Square wave")  # Add entry to dropdown
@@ -278,7 +312,7 @@ class MainWindow(QMainWindow):
         start_button = QPushButton("Start Measurement")
         start_button.setObjectName("startButton")  # Set an object name for styling
         start_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
-        start_button.setMinimumHeight(25)
+        start_button.setMinimumHeight(20)
         start_button.clicked.connect(self.start_measurement)  # Connect to the start_measurement method
         button_layout.addWidget(start_button)
 
@@ -286,8 +320,9 @@ class MainWindow(QMainWindow):
         download_button = QPushButton("Download Data")
         download_button.setObjectName("downloadButton")  # Set an object name for styling
         download_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
-        download_button.setMinimumHeight(25)
+        download_button.setMinimumHeight(20)
         button_layout.addWidget(download_button)
+        download_button.clicked.connect(self.download_csv_file)
 
         # Create a container for the manual heater control label and button
         heater_container = QFrame()
@@ -304,7 +339,7 @@ class MainWindow(QMainWindow):
         self.heater_button = QPushButton("Current state: heater off")
         self.heater_button.setObjectName("heaterButton")
         self.heater_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)  # Use size policy instead of fixed size
-        self.heater_button.setMinimumHeight(25)
+        self.heater_button.setMinimumHeight(20)
         self.heater_button.setStyleSheet("background-color: red;")
         self.heater_button.clicked.connect(self.toggle_heater)
         heater_layout.addWidget(manual_heater_control_label)
@@ -312,7 +347,7 @@ class MainWindow(QMainWindow):
 
         # Main layout for top left frame
         top_left_frame_layout = QVBoxLayout(top_left_frame)
-        top_left_frame_layout.setContentsMargins(10, 10, 10, 10)  # Set margins
+        top_left_frame_layout.setContentsMargins(5, 5, 5, 5)  # Set margins
         top_left_frame_layout.setSpacing(0)  # Set spacing between elements
         top_left_frame_layout.addWidget(logo_label)
         top_left_frame_layout.addLayout(serial_layout)  # Add the serial port layout
@@ -345,14 +380,14 @@ class MainWindow(QMainWindow):
         msg_box.setIcon(QMessageBox.Critical)
         msg_box.setWindowTitle("Error")
         msg_box.setText(message)
-        msg_box.exec_()
+        msg_box.exec()
 
     def show_success_message(self, message):
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Information)
         msg_box.setWindowTitle("Success")
         msg_box.setText(message)
-        msg_box.exec_()
+        msg_box.exec()
 
     def validate_excitation_voltage(self):
         try:
@@ -364,13 +399,15 @@ class MainWindow(QMainWindow):
             self.show_error_message("Invalid excitation voltage. Please enter a value between 0.5 and 1.0.")
             return False
 
-    # Check if the MUX frequency is an integer
+    # Check if the MUX frequency is an integer, greater than 0 and smaller than 9
     def validate_mux_frequency(self):
         try:
             value = int(self.mux_freq_input.text())
+            if not (1 <= value <= 8):
+                raise ValueError("Value out of range")
             return True
         except ValueError:
-            self.show_error_message("Invalid MUX frequency. Please enter an integer value.")
+            self.show_error_message("Invalid MUX frequency. Please enter an integer value between 1 and 8.")
             return False
 
     # Check if the wave frequency of DAC hot plate is within range of 0.002 and 0.5 Hz
@@ -425,6 +462,13 @@ class MainWindow(QMainWindow):
         print(self.heater_button.text())
 
     def start_measurement(self):
+        if not self.show_confirmation_dialog():
+            return  # Exit if user cancels the action
+
+        # Check if measurement already started
+        if self.measurement_started:
+            self.clear_csv_file()  # Clear the CSV file for a new measurement
+
         if not self.validate_excitation_voltage():
             return
         if not self.validate_mux_frequency():
@@ -459,6 +503,33 @@ class MainWindow(QMainWindow):
         else:
             self.show_error_message("Serial port not connected.")
 
+    def show_confirmation_dialog(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Confirm Action")
+
+        # Create dialog layout
+        dialog_layout = QVBoxLayout()
+
+        # Add message to dialog
+        message_label = QLabel("Starting a new measurement deletes the data from the previous measurement.\nDo you want to continue?")
+        message_label.setStyleSheet("QLabel { border: none; font-size: 14px; }")  # Remove border and set font size
+        dialog_layout.addWidget(message_label)
+
+        # Add buttons to dialog
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        dialog_layout.addWidget(buttons)
+
+        # Connect buttons
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+
+        dialog.setLayout(dialog_layout)
+
+        # Show dialog and get the result
+        result = dialog.exec_()
+
+        return result == QDialog.Accepted
+
     @Slot(str)
     def update_serial_monitor(self, data):
         self.serial_monitor.append(data)  # Append new data to the serial monitor
@@ -469,9 +540,8 @@ class MainWindow(QMainWindow):
         if match:
             strip = int(match.group(1))
             resistance = int(match.group(2))
-            time_val = int(match.group(3))
-            time_val_seconds = time_val / 1000  # Convert milliseconds to seconds
-            self.csv_writer.writerow([strip, time_val_seconds, resistance])
+            time_val = int(match.group(3)) / 1000  # Convert time to seconds
+            self.csv_writer.writerow([strip, time_val, resistance])
             self.csv_file.flush()  # Ensure the data is written to disk immediately
 
     def update_plot_canvas(self):
