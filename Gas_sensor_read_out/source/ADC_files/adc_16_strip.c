@@ -85,9 +85,13 @@ volatile uint16_t I_sens_Count = 0;
 
 static uint8_t SoftwareAverageCount = 30;
 static uint8_t currentCountIndex = 0;
+// Value to store the result of the curr strip
 static uint32_t VoltageSum = 0;
 static uint32_t CurrentSum = 0;
 static uint32_t resultVoltage = 0;
+static uint32_t current_adc_result = 0;
+static uint32_t Total_averaged_current = 0;
+static uint32_t Total_adc_summation = 0;
 
 static uint8_t current_active_strip_index = 0;
 static uint8_t *active_strip_indices = NULL; // Pointer to dynamically allocated array
@@ -291,13 +295,21 @@ void calculate_resistance_array(void) {
         if (active_strips[i]) {
             // Fill in the timestamp in the resistance array
             resistance_array[i][1] = V_sens_strip_values[i][1];
-            
+            Total_averaged_current = Total_adc_summation / g_strip_count;
+            // PRINTF("Total adc summation: %d\n", Total_adc_summation);
+            // PRINTF("Total averaged current: %d\n", Total_averaged_current);
+
             // Calculate the resistance and round to the nearest integer
             // 0.5 is added to account for truncation when casting to int
 
-            resistance_array[i][0] = (int)(((float)V_sens_strip_values[i][0] / ((float)current_adc_result) * 120 * 75 + 0.5));
+            resistance_array[i][0] = (int)(((float)V_sens_strip_values[i][0] / ((float)Total_averaged_current) * 120 * 75 + 0.5));
+
+   
         }
     }
+    Total_adc_summation = 0;
+    Total_averaged_current = 0;
+
 }
 
 void ConvertActiveStrips() {
@@ -367,6 +379,9 @@ void CTIMER2_IRQHandler(void) {
         // calculate the average of the ADC values
         current_adc_result = CurrentSum / SoftwareAverageCount;
         resultVoltage = VoltageSum / SoftwareAverageCount;
+        Total_adc_summation += current_adc_result;
+
+
 
         // PRINTF("Active channel: %d\n", active_strip_indices[current_active_strip_index]);
         uint8_t currentChannel = active_strip_indices[current_active_strip_index];
